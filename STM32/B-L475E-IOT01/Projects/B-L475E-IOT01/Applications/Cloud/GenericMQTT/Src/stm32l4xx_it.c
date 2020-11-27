@@ -43,7 +43,7 @@
   ******************************************************************************
   */
 
-/* Includes ------------------------------------------------------------------*/
+  /* Includes ------------------------------------------------------------------*/
 #include "stm32l4xx_it.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -73,10 +73,10 @@ void NMI_Handler(void)
   */
 void HardFault_Handler(void)
 {
-  /* Go to infinite loop when Hard Fault exception occurs */
-  while (1)
-  {
-  }
+	/* Go to infinite loop when Hard Fault exception occurs */
+	while (1)
+	{
+	}
 }
 
 /**
@@ -86,10 +86,10 @@ void HardFault_Handler(void)
   */
 void MemManage_Handler(void)
 {
-  /* Go to infinite loop when Memory Manage exception occurs */
-  while (1)
-  {
-  }
+	/* Go to infinite loop when Memory Manage exception occurs */
+	while (1)
+	{
+	}
 }
 
 /**
@@ -99,10 +99,10 @@ void MemManage_Handler(void)
   */
 void BusFault_Handler(void)
 {
-  /* Go to infinite loop when Bus Fault exception occurs */
-  while (1)
-  {
-  }
+	/* Go to infinite loop when Bus Fault exception occurs */
+	while (1)
+	{
+	}
 }
 
 /**
@@ -112,10 +112,10 @@ void BusFault_Handler(void)
   */
 void UsageFault_Handler(void)
 {
-  /* Go to infinite loop when Usage Fault exception occurs */
-  while (1)
-  {
-  }
+	/* Go to infinite loop when Usage Fault exception occurs */
+	while (1)
+	{
+	}
 }
 
 /**
@@ -123,6 +123,7 @@ void UsageFault_Handler(void)
   * @param  None
   * @retval None
   */
+
 void SVC_Handler(void)
 {
 
@@ -153,8 +154,8 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-  HAL_IncTick();
-  HAL_SYSTICK_IRQHandler();
+	HAL_IncTick();
+	HAL_SYSTICK_IRQHandler();
 }
 
 /******************************************************************************/
@@ -171,13 +172,13 @@ void SysTick_Handler(void)
   */
 void EXTI15_10_IRQHandler(void)
 {
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
 }
 
 
 void EXTI1_IRQHandler(void)
 {
- HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);		
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
