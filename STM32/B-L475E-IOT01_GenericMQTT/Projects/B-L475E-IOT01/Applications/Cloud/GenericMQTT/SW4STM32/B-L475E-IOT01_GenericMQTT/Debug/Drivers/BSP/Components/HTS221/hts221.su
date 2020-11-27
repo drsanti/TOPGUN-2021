@@ -1,0 +1,5 @@
+hts221.c:83:6:HTS221_H_Init	8	static
+hts221.c:175:6:HTS221_T_Init	8	static
+hts221.c:109:9:HTS221_H_ReadID	8	static
+hts221.c:126:7:HTS221_H_ReadHumidity	32	static
+hts221.c:202:7:HTS221_T_ReadTemp	32	static

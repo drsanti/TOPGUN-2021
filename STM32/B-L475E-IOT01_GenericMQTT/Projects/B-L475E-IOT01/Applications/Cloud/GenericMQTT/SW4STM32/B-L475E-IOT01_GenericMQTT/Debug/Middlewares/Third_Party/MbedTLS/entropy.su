@@ -1,0 +1,12 @@
+entropy.c:463:12:entropy_dummy_source	16	static
+entropy.c:168:12:entropy_update	96	static
+entropy.c:224:12:entropy_gather_internal.part.0	168	static
+entropy.c:477:12:mbedtls_entropy_source_self_test_gather.constprop	32	static
+entropy.c:69:6:mbedtls_entropy_init	8	static
+entropy.c:120:6:mbedtls_entropy_free	0	static
+entropy.c:131:5:mbedtls_entropy_add_source	12	static
+entropy.c:201:5:mbedtls_entropy_update_manual	0	static
+entropy.c:267:5:mbedtls_entropy_gather	0	static
+entropy.c:286:5:mbedtls_entropy_func	88	static
+entropy.c:530:5:mbedtls_entropy_source_self_test	48	static
+entropy.c:578:5:mbedtls_entropy_self_test	416	static

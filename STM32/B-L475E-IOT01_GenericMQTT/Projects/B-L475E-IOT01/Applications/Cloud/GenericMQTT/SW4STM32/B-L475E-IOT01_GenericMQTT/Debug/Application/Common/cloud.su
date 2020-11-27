@@ -1,0 +1,4 @@
+cloud.c:87:6:dialog_ask	16	static
+cloud.c:107:6:CLOUD_Error_Handler	8	static
+cloud.c:165:5:platform_init	56	static
+cloud.c:301:9:platform_deinit	8	static

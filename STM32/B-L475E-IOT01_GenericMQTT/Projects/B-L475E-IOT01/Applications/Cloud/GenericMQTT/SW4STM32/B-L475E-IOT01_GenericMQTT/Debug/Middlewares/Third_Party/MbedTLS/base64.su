@@ -1,0 +1,4 @@
+base64.c:77:5:mbedtls_base64_encode.part.0	28	static
+base64.c:77:5:mbedtls_base64_encode	8	static
+base64.c:144:5:mbedtls_base64_decode	28	static
+base64.c:251:5:mbedtls_base64_self_test	160	static

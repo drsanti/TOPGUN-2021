@@ -1,0 +1,5 @@
+MQTTConnectClient.c:172:5:MQTTSerialize_zero	16	static
+MQTTConnectClient.c:61:5:MQTTSerialize_connect	40	static
+MQTTConnectClient.c:135:5:MQTTDeserialize_connack	24	static
+MQTTConnectClient.c:202:5:MQTTSerialize_disconnect	0	static
+MQTTConnectClient.c:214:5:MQTTSerialize_pingreq	0	static

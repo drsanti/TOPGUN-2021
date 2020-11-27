@@ -1,0 +1,5 @@
+lis3mdl.c:86:6:LIS3MDL_MagInit	16	static
+lis3mdl.c:98:6:LIS3MDL_MagDeInit	8	static
+lis3mdl.c:131:6:LIS3MDL_MagLowPower	8	static
+lis3mdl.c:119:9:LIS3MDL_MagReadID	8	static
+lis3mdl.c:158:6:LIS3MDL_MagReadXYZ	32	static

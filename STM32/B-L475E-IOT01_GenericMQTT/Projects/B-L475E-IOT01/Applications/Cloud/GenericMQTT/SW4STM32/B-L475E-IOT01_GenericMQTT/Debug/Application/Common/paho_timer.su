@@ -1,0 +1,5 @@
+paho_timer.c:54:6:TimerCountdownMS	16	static
+paho_timer.c:61:6:TimerCountdown	16	static
+paho_timer.c:67:5:TimerLeftMS	8	static
+paho_timer.c:83:6:TimerIsExpired	8	static
+paho_timer.c:89:6:TimerInit	0	static

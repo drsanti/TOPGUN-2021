@@ -1,0 +1,3 @@
+stm32l475e_iot01_psensor.c:77:10:BSP_PSENSOR_Init	8	static
+stm32l475e_iot01_psensor.c:101:9:BSP_PSENSOR_ReadID	0	static
+stm32l475e_iot01_psensor.c:110:7:BSP_PSENSOR_ReadPressure	0	static

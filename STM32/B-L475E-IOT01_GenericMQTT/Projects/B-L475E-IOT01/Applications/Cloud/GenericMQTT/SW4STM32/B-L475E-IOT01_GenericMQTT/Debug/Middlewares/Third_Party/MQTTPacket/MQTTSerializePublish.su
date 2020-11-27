@@ -1,0 +1,5 @@
+MQTTSerializePublish.c:56:5:MQTTSerialize_publish	56	static
+MQTTSerializePublish.c:105:5:MQTTSerialize_ack	16	static
+MQTTSerializePublish.c:138:5:MQTTSerialize_puback	16	static
+MQTTSerializePublish.c:152:5:MQTTSerialize_pubrel	16	static
+MQTTSerializePublish.c:165:5:MQTTSerialize_pubcomp	16	static

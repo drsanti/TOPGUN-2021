@@ -1,0 +1,2 @@
+sensors_data.c:76:5:init_sensors	8	static
+sensors_data.c:129:5:PrepareSensorsData	0	static

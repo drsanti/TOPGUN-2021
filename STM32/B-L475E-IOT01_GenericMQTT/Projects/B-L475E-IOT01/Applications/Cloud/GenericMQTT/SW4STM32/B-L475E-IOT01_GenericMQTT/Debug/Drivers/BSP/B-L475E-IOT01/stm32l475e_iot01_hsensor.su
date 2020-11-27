@@ -1,0 +1,3 @@
+stm32l475e_iot01_hsensor.c:77:10:BSP_HSENSOR_Init	8	static
+stm32l475e_iot01_hsensor.c:100:9:BSP_HSENSOR_ReadID	0	static
+stm32l475e_iot01_hsensor.c:109:7:BSP_HSENSOR_ReadHumidity	0	static

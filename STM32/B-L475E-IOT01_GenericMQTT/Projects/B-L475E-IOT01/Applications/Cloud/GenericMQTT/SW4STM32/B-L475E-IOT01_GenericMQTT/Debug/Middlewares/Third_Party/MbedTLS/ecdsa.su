@@ -1,0 +1,10 @@
+ecdsa.c:49:12:derive_mpi	24	static
+ecdsa.c:72:5:mbedtls_ecdsa_sign	128	static
+ecdsa.c:161:5:mbedtls_ecdsa_sign_det	304	static
+ecdsa.c:199:5:mbedtls_ecdsa_verify	128	static
+ecdsa.c:308:5:mbedtls_ecdsa_write_signature	216	static
+ecdsa.c:357:5:mbedtls_ecdsa_read_signature	72	static
+ecdsa.c:408:5:mbedtls_ecdsa_genkey	24	static
+ecdsa.c:418:5:mbedtls_ecdsa_from_keypair	16	static
+ecdsa.c:435:6:mbedtls_ecdsa_init	0	static
+ecdsa.c:443:6:mbedtls_ecdsa_free	0	static

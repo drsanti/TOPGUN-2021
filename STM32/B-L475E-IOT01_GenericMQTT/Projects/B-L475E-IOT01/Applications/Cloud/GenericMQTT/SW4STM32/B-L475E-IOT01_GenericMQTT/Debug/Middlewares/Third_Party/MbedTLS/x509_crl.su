@@ -1,0 +1,5 @@
+x509_crl.c:581:5:mbedtls_x509_crl_info	64	static
+x509_crl.c:656:6:mbedtls_x509_crl_init	0	static
+x509_crl.c:664:6:mbedtls_x509_crl_free	32	static
+x509_crl.c:255:5:mbedtls_x509_crl_parse_der	96	static
+x509_crl.c:490:5:mbedtls_x509_crl_parse	72	static

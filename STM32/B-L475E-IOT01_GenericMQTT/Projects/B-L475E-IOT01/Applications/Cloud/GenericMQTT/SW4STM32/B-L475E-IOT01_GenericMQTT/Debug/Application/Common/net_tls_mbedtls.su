@@ -1,0 +1,8 @@
+net_tls_mbedtls.c:551:13:my_debug	0	static
+net_tls_mbedtls.c:565:13:internal_close	8	static
+net_tls_mbedtls.c:115:5:net_sock_open_mbedtls	568	static
+net_tls_mbedtls.c:383:5:net_sock_recv_mbedtls	48	static
+net_tls_mbedtls.c:436:5:net_sock_send_mbedtls	48	static
+net_tls_mbedtls.c:483:5:net_sock_close_mbedtls	16	static
+net_tls_mbedtls.c:514:5:net_sock_destroy_mbedtls	8	static
+net_tls_mbedtls.c:65:5:net_sock_create_mbedtls	24	static

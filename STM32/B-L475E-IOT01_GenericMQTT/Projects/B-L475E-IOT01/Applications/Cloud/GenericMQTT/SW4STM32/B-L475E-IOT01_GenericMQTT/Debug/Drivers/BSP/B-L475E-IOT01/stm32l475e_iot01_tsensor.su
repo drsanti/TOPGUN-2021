@@ -1,0 +1,2 @@
+stm32l475e_iot01_tsensor.c:77:10:BSP_TSENSOR_Init	8	static
+stm32l475e_iot01_tsensor.c:102:7:BSP_TSENSOR_ReadTemp	0	static

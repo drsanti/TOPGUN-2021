@@ -1,0 +1,10 @@
+sha1.c:78:6:mbedtls_sha1_init	0	static
+sha1.c:83:6:mbedtls_sha1_free	0	static
+sha1.c:91:6:mbedtls_sha1_clone	8	static
+sha1.c:100:6:mbedtls_sha1_starts	0	static
+sha1.c:113:6:mbedtls_sha1_process	128	static
+sha1.c:273:6:mbedtls_sha1_update.part.0	32	static
+sha1.c:273:6:mbedtls_sha1_update	0	static
+sha1.c:321:6:mbedtls_sha1_finish	24	static
+sha1.c:352:6:mbedtls_sha1	112	static
+sha1.c:392:5:mbedtls_sha1_self_test	1168	static
