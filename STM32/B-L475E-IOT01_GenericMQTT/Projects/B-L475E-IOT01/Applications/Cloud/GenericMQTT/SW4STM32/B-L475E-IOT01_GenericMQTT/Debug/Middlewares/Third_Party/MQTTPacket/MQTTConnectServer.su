@@ -1,2 +1,0 @@
-MQTTConnectServer.c:53:5:MQTTDeserialize_connect	48	static
-MQTTConnectServer.c:121:5:MQTTSerialize_connack	32	static

@@ -1,8 +1,0 @@
-pkparse.c:442:12:pk_use_ecparams	16	static
-pkparse.c:642:12:pk_parse_key_pkcs1_der	32	static
-pkparse.c:723:12:pk_parse_key_sec1_der	56	static
-pkparse.c:546:12:pk_get_pk_alg	32	static
-pkparse.c:848:12:pk_parse_key_pkcs8_unencrypted_der	48	static
-pkparse.c:579:5:mbedtls_pk_parse_subpubkey	56	static
-pkparse.c:1059:5:mbedtls_pk_parse_key	64	static
-pkparse.c:1248:5:mbedtls_pk_parse_public_key	64	static

@@ -1,4 +1,0 @@
-pem.c:183:13:pem_aes_decrypt	456	static
-pem.c:53:6:mbedtls_pem_init	0	static
-pem.c:206:5:mbedtls_pem_read_buffer	72	static
-pem.c:388:6:mbedtls_pem_free	16	static

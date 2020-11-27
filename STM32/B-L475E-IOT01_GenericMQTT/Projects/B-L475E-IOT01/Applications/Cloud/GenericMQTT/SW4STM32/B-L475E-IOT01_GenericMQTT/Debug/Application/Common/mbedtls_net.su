@@ -1,3 +1,0 @@
-mbedtls_net.c:54:5:mbedtls_net_recv	16	static
-mbedtls_net.c:75:5:mbedtls_net_recv_blocking	32	static
-mbedtls_net.c:115:5:mbedtls_net_send	16	static
