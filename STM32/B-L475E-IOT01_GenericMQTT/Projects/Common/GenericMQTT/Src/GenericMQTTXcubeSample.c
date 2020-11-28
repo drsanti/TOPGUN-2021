@@ -257,21 +257,6 @@ int network_write(Network* n, unsigned char* buffer, int len, int timeout_ms)
 void allpurposeMessageHandler(MessageData* data)
 {
 
-	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_0);
-	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
-	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_2);
-	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_3);
-	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_4);
-	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_5);
-	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_9);
-
-	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_4);
-	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-
-	HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_2);
-	HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);
-
-
 	/**
 	 * Print
 	 */
