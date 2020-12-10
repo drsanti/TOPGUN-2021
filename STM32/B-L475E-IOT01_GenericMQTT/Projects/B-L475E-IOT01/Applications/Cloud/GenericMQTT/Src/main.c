@@ -139,9 +139,7 @@ int main(void)
 
     /* Configure the system clock */
     SystemClock_Config();
-
     Periph_Config();
-
     BSP_LED_Init(LED_GREEN);
     BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
 
@@ -162,10 +160,7 @@ int main(void)
     firewall_init();
 #endif
 
-
     MX_GPIO_Init();
-
-
     cloud_test(0);
 }
 

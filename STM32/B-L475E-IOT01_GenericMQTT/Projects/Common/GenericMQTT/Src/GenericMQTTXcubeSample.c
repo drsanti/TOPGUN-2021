@@ -249,6 +249,8 @@ int network_write(Network* n, unsigned char* buffer, int len, int timeout_ms)
     return rc;
 }
 
+
+
 /** Message callback
  *
  *  Note: No context handle is passed by the callback. Must rely on static variables.
@@ -263,35 +265,9 @@ void allpurposeMessageHandler(MessageData* data)
 	snprintf(mqtt_msg, MIN(MQTT_MSG_BUFFER_SIZE, data->message->payloadlen + 1), "%s", (char *)data->message->payload);
 	msg_info("Received message: topic: %.*s content: %s.\n", data->topicName->lenstring.len, data->topicName->lenstring.data, mqtt_msg);
 
-
-	/**
-	 * JSON
-	 */
 	cJSON *json = NULL;
 	cJSON *root = cJSON_Parse(mqtt_msg);
 
-
-	/**
-	 * Key: LedOn
-	 * Val: true, false
-	 */
-	json = cJSON_GetObjectItemCaseSensitive(root, "LedOn");
-	if (json != NULL) {
-		if (cJSON_IsBool(json) == true) {
-			status_data.LedOn = (cJSON_IsTrue(json) == true);
-			Led_SetState(status_data.LedOn);
-			g_statusChanged = true;
-		}
-		else {
-			msg_error("JSON parsing error of LedOn value.\n");
-		}
-	}
-
-
-	/**
-	 * Key: TelemetryInterval
-	 * Val: int
-	 */
 	json = cJSON_GetObjectItemCaseSensitive(root, "TelemetryInterval");
 	if (json != NULL) {
 		if (cJSON_IsNumber(json) == true)  {
@@ -303,11 +279,6 @@ void allpurposeMessageHandler(MessageData* data)
 		}
 	}
 
-
-	/**
-	 * Key: Reboot
-	 * Val: true
-	 */
 	json = cJSON_GetObjectItemCaseSensitive(root, "Reboot");
 	if (json != NULL) {
 		if (cJSON_IsBool(json) == true) {
@@ -318,10 +289,6 @@ void allpurposeMessageHandler(MessageData* data)
 		}
 	}
 
-
-	/**
-	 * Cleanup
-	 */
 	cJSON_Delete(root);
 }
 
@@ -713,23 +680,6 @@ void genericmqtt_client_XCube_sample_run(void)
                             snprintf(mqtt_pubtopic, MQTT_TOPIC_BUFFER_SIZE, "/devices/%s/status", device_config->MQClientId);
 #endif
 
-                            /***
-                            //!! The time(NULL) causes exception!!
-                            ret = snprintf( mqtt_msg, MQTT_MSG_BUFFER_SIZE, "{\n \"state\": {\n  \"reported\": {\n"
-                               "   \"LedOn\": %s,\n"
-                               "   \"TelemetryInterval\": %d,\n"
-                               "   \"ts\": %ld, \"mac\": \"%s\"\n"
-                               "  }\n }\n}",
-                               (status_data.LedOn == true) ? "true" : "false",
-                               (int) status_data.TelemetryInterval,
-                               time(NULL),
-                               pub_data.mac);
-                              ***/
-
-
-                            /***
-                             * Work!
-                             ***/
                             uint32_t ts = time(NULL); /* last_telemetry_time_ms; */
 
                             ret = snprintf(mqtt_msg, MQTT_MSG_BUFFER_SIZE, "{\n \"state\": {\n  \"reported\": {\n"
