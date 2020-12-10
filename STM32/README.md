@@ -1,4 +1,4 @@
-# How to
+# Open Project
 
 - Run `STM32CubeIDE` and `Open Projects from File System...`
 
