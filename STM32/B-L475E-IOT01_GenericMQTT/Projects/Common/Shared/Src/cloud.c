@@ -60,6 +60,10 @@ extern int net_if_init(void * if_ctxt);
 extern int net_if_deinit(void * if_ctxt);
 extern int net_if_reinit(void * if_ctxt); 
 
+extern void sensors_initialized(void *params);
+extern void iot_got_ip_address(void *params);
+
+
 /* Private defines -----------------------------------------------------------*/
 #define CLOUD_TIMEDATE_TLS_VERIFICATION_IGNORE  /**< Accept to connect to a server which is not verified by TLS */
 
@@ -180,17 +184,42 @@ int platform_init(void)
     srand(random_number);
   }
 
-  printf("\n");
-  printf("*************************************************************\n");
-  printf("***   STM32 IoT Discovery kit for                         \n");
-  printf("***      STM32F413/STM32F769/STM32L475/STM32L496 MCU      \n");
-  printf("***   %s Cloud Connectivity Demonstration                 \n",fw_version->name);
-  printf("***   FW version %d.%d.%d - %s      \n",
-           fw_version->major, fw_version->minor, fw_version->patch, fw_version->packaged_date);
-  printf("*************************************************************\n");
+//  printf("\n");
+//  printf("*************************************************************\n");
+//  printf("***   STM32 IoT Discovery kit for                         \n");
+//  printf("***      STM32F413/STM32F769/STM32L475/STM32L496 MCU      \n");
+//  printf("***   %s Cloud Connectivity Demonstration                 \n",fw_version->name);
+//  printf("***   FW version %d.%d.%d - %s      \n",
+//           fw_version->major, fw_version->minor, fw_version->patch, fw_version->packaged_date);
+//  printf("*************************************************************\n");
+
+    printf("\n\n");
+    printf("*************************************************************\n");
+    printf("***                TESA TOPGUN RALLY 2021                 ***\n");
+    printf("***                 IoT Application Demo                  ***\n");
+    printf("*************************************************************\n\n");
 
   
-  printf("\n*** Board personalization ***\n\n");
+
+
+
+
+  printf("\n*** Board Initialization ***\n");
+
+
+#ifdef SENSOR
+    printf("\n*** Sensors Initialization ***\n");
+	int res = init_sensors();
+	if(0 != res)
+	{
+		msg_error("init_sensors returned error : %d\n", res);
+	}
+	else {
+		sensors_initialized(NULL);
+	}
+#endif /* SENSOR */
+
+
   /* Network initialization */
   if (net_init(&hnet, NET_IF, (net_if_init)) != NET_OK)
   {
@@ -230,6 +259,7 @@ int platform_init(void)
     {
       case NET_IP_V4:
         msg_info("IP address: %d.%d.%d.%d\n", ipAddr.ip[12], ipAddr.ip[13], ipAddr.ip[14], ipAddr.ip[15]);
+        iot_got_ip_address(NULL);
         break;
       case NET_IP_V6:
       default:
@@ -244,15 +274,13 @@ int platform_init(void)
   
   
   
-  skip_reconf = (checkTLSRootCA() == 0)
-    && ( (checkTLSDeviceConfig() == 0) || !app_needs_device_keypair() )
-    && (checkIoTDeviceConfig() == 0);
+  skip_reconf = (checkTLSRootCA() == 0) && ( (checkTLSDeviceConfig() == 0) || !app_needs_device_keypair() )  && (checkIoTDeviceConfig() == 0);
   
   if (skip_reconf == true)
   {
-    printf("Push the User button (Blue) within the next 5 seconds if you want to update "
+    printf("Push the User button (Blue) within the next 2 seconds if you want to update "
            "the device security parameters or credentials.\n\n");
-    skip_reconf = (Button_WaitForPush(5000) == BP_NOT_PUSHED);
+    skip_reconf = (Button_WaitForPush(2000) == BP_NOT_PUSHED);
   }
   
   if (skip_reconf == false)
@@ -286,19 +314,19 @@ int platform_init(void)
     updateFirmwareVersion();
 #endif  /* RFU */
   
-#ifdef SENSOR
-  int res = init_sensors();
-  if(0 != res)
-  {
-    msg_error("init_sensors returned error : %d\n", res);
-  }
-#endif /* SENSOR */
+//#ifdef SENSOR
+//  int res = init_sensors();
+//  if(0 != res)
+//  {
+//    msg_error("init_sensors returned error : %d\n", res);
+//  }
+//#endif /* SENSOR */
    
  return 0;
 }
 
 
-void    platform_deinit()
+void platform_deinit()
 {
    /* Close Cloud connectivity demonstration */
   printf("\n*** Cloud connectivity demonstration ***\n\n");

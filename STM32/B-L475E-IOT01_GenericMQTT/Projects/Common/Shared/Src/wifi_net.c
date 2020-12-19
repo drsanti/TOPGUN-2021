@@ -76,16 +76,16 @@ int net_if_init(void * if_ctxt)
   int wifiConnectCounter = 0;
   bool skip_reconf = false;
 
-  printf("\n*** WIFI connection ***\n\n");
+  printf("\n*** WIFI Connection (SSID and PASS) ***\n\n");
 
   skip_reconf = (checkWiFiCredentials(&ssid, &psk, (uint8_t *) &security_mode) == HAL_OK);
 
   if (skip_reconf == true)
   {
-    printf("Push the User button (Blue) within the next 5 seconds if you want to update"
+    printf("Push the User button (Blue) within the next 2 seconds if you want to update"
            " the WiFi network configuration.\n\n");
 
-    skip_reconf = (Button_WaitForPush(5000) == BP_NOT_PUSHED);
+    skip_reconf = (Button_WaitForPush(2000) == BP_NOT_PUSHED);
   }
   
   if (skip_reconf == false)

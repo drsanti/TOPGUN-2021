@@ -481,7 +481,6 @@ void genericmqtt_client_XCube_sample_run(void)
                     ret = MQTTSubscribe(&client, mqtt_subtopic, QOS0, (allpurposeMessageHandler));
 
 
-
                 }
 
                 /* ret = MQTTSetMessageHandler(&client, "#", (allpurposeMessageHandler)); */
