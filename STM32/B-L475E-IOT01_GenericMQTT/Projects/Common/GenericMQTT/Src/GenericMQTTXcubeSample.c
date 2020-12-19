@@ -253,110 +253,6 @@ int network_write(Network* n, unsigned char* buffer, int len, int timeout_ms)
     return rc;
 }
 
-<<<<<<< HEAD
-/**
- * Digital Outputs
- *   [0]: A0		PC5
- *   [1]: A1		PC4
- *   [2]: A2		PC3
- *   [3]: A3		PC2
- *   [4]: A4		PC1
- *   [5]: A5		PC0
- *   [6]: LED1		PA5
- *   [7]: LED2		PB14
- *   [8]: LED3		PC9		LED3&LED4 (Wi-Fi/Bluetooth)
- */
-
-#define BIT_A0		0
-#define BIT_A1		1
-#define BIT_A2		2
-#define BIT_A3		3
-#define BIT_A4		4
-#define BIT_A5		5
-#define BIT_LED1	6
-#define BIT_LED2	7
-#define BIT_LED3	8
-
-#define NUM_DIGITAL_OUTPUTS	9
-static bool digital_outputs[NUM_DIGITAL_OUTPUTS] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-static void digital_outputs_update(void) {
-
-	for(int i=0; i<=5; i++) {
-		HAL_GPIO_WritePin(GPIOC, (uint16_t)(1<<(5-i)), (int)digital_outputs[i]);	// A<5:0>
-	}
-
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,  (int)digital_outputs[6]);	// LED1
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, (int)digital_outputs[7]);	// LED2
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  (int)digital_outputs[8]);	// LED3/LED4
-
-	status_data.LedOn = digital_outputs[BIT_LED2];
-}
-
-void Digital_Output_Set(int16_t BitId, bool BitData) {
-
-	if( BitId>=0 && BitId<=5 ) {
-		digital_outputs[BitId] = BitData;
-		g_statusChanged = true;
-		//HAL_GPIO_WritePin(GPIOC, (uint16_t)(1<<(5-BitId)), (int)digital_outputs[BitId]);	// A<5:0>
-	}
-	else if( BitId == BIT_LED1 ) {
-		digital_outputs[BIT_LED1] = BitData;
-		g_statusChanged = true;
-		//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,  (int)digital_outputs[BIT_LED1]);	// LED1
-	}
-	else if( BitId == BIT_LED2 ) {
-		digital_outputs[BIT_LED2] = BitData;
-		g_statusChanged = true;
-		//HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, (int)digital_outputs[BIT_LED2]);	// LED2
-	}
-	else if( BitId == BIT_LED3 ) {
-		digital_outputs[BIT_LED3] = BitData;
-		g_statusChanged = true;
-		//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  (int)digital_outputs[BIT_LED3]);	// LED3/LED4
-	}
-
-	if(g_statusChanged == true) {
-		digital_outputs_update();
-	}
-}
-
-
-
-void Led_Blue_Orange_Blink(int period, int duty, int count)
-{
-    if ((duty > 0) && (period >= duty))
-    {
-        /*  Shape:   ____
-                      on |_off__ */
-        do
-        {
-        	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  GPIO_PIN_SET); 	// LED3/LED4
-            HAL_Delay(duty);
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  GPIO_PIN_RESET); // LED3/LED4
-            HAL_Delay(period - duty);
-        } while (count--);
-    }
-    if ((duty < 0) && (period >= -duty))
-    {
-        /*  Shape:         ____
-                    __off_| on   */
-        do
-        {
-        	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  GPIO_PIN_RESET); // LED3/LED4
-            HAL_Delay(period + duty);
-            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  GPIO_PIN_SET); 	// LED3/LED4
-            HAL_Delay(-duty);
-        } while (count--);
-    }
-
-    // Restore
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  (int)digital_outputs[BIT_LED3]);	// LED3/LED4
-}
-=======
->>>>>>> 0e3bcac1b1c7f466643ccc49a344943778306564
-
-
 /** Message callback
  *
  *  Note: No context handle is passed by the callback. Must rely on static variables.
@@ -376,115 +272,6 @@ void allpurposeMessageHandler(MessageData* data)
 	cJSON *json = NULL;
 	cJSON *root = cJSON_Parse(mqtt_msg);
 
-<<<<<<< HEAD
-
-
-
-	for(int i=0; i<3; i++) {
-			char key[64];
-			sprintf(key, "Led%d", i+1);
-			json = cJSON_GetObjectItemCaseSensitive(root, key);
-			if(json != NULL) {
-				if (cJSON_IsBool(json) == true) {
-					digital_outputs[i+6] = (cJSON_IsTrue(json) == true);
-					digital_outputs_update();
-					g_statusChanged = true;
-					break;
-				}
-				else if( (cJSON_IsString(json) == true) ) {
-					if( (strcmp(json->valuestring, "toggle") == 0) || (strcmp(json->valuestring, "inv") == 0)) {
-						digital_outputs[i+6] = !digital_outputs[i+6];
-						digital_outputs_update();
-						g_statusChanged = true;
-						break;
-					}
-					else if( (strcmp(json->valuestring, "set") == 0) ) {
-						digital_outputs[i+6] = true;
-						digital_outputs_update();
-						g_statusChanged = true;
-						break;
-					}
-					else if( (strcmp(json->valuestring, "reset") == 0) || (strcmp(json->valuestring, "clear") == 0) || (strcmp(json->valuestring, "clr") == 0)) {
-						digital_outputs[i+6] = false;
-						digital_outputs_update();
-						g_statusChanged = true;
-						break;
-					}
-				}
-				else {
-					msg_error("JSON parsing error of Led value.\n");
-				}
-			}
-		}
-
-
-	/**
-	 * DigitalOutput<5:NUM_DIGITAL_OUTPUTS-1>
-	 */
-
-	for(int i=0; i<NUM_DIGITAL_OUTPUTS; i++) {
-		char key[64];
-		sprintf(key, "DigitalOutput%d", i);
-		json = cJSON_GetObjectItemCaseSensitive(root, key);
-		if(json != NULL) {
-			if (cJSON_IsBool(json) == true) {
-				digital_outputs[i] = (cJSON_IsTrue(json) == true);
-				digital_outputs_update();
-				g_statusChanged = true;
-				break;
-			}
-			else if( (cJSON_IsString(json) == true)  ) {
-				if( (strcmp(json->valuestring, "toggle") == 0 ) || (strcmp(json->valuestring, "inv") == 0 )) {
-					digital_outputs[i] = !digital_outputs[i];
-					digital_outputs_update();
-					g_statusChanged = true;
-					break;
-				}
-				else if( (strcmp(json->valuestring, "set") == 0 ) ) {
-					digital_outputs[i] = true;
-					digital_outputs_update();
-					g_statusChanged = true;
-					break;
-				}
-				else if( (strcmp(json->valuestring, "reset") == 0 ) || (strcmp(json->valuestring, "clear") == 0 ) || (strcmp(json->valuestring, "clr") == 0 )) {
-					digital_outputs[i] = false;
-					digital_outputs_update();
-					g_statusChanged = true;
-					break;
-				}
-			}
-			else {
-				msg_error("JSON parsing error of DigitalOutputX value.\n");
-			}
-		}
-	}
-
-	json = cJSON_GetObjectItemCaseSensitive(root, "DigitalWrite");
-	int d = 0;
-	if (json != NULL) {
-		if (cJSON_IsNumber(json) == true) {
-
-			d = json->valueint;
-			for(int j=0; j<NUM_DIGITAL_OUTPUTS; j++) {
-				digital_outputs[j] = ((d&1) > 0);
-				d>>=1;
-				printf("DigitalOutput[%d]: %s\n", j, ((digital_outputs[j] == true) ? "true" : "false") );
-			}
-			digital_outputs_update();
-			g_statusChanged = true;
-		}
-		else {
-			msg_error("JSON parsing error of DigitalWrite value.\n");
-		}
-	}
-
-
-	/**
-	 * Key: TelemetryInterval
-	 * Val: int
-	 */
-=======
->>>>>>> 0e3bcac1b1c7f466643ccc49a344943778306564
 	json = cJSON_GetObjectItemCaseSensitive(root, "TelemetryInterval");
 	if (json != NULL) {
 		if (cJSON_IsNumber(json) == true)  {
@@ -506,16 +293,6 @@ void allpurposeMessageHandler(MessageData* data)
 		}
 	}
 
-<<<<<<< HEAD
-
-	/* Visual notification of the Received message: LED blink. */
-	Led_Blue_Orange_Blink(40, 10, 4);
-
-	/**
-	 * Cleanup
-	 */
-=======
->>>>>>> 0e3bcac1b1c7f466643ccc49a344943778306564
 	cJSON_Delete(root);
 }
 
@@ -892,8 +669,7 @@ void genericmqtt_client_XCube_sample_run(void)
                                 if (ret == MQSUCCESS)  {
 
                                     /* Visual notification of the telemetry publication: LED blink. */
-                                	Led_Blue_Orange_Blink(50, 25, 5);
-
+                                	Led_Blink(50, 25, 5);
 
                                     msg_info("#\n");
                                     msg_info("publication topic: %s \npayload: %s\n", mqtt_pubtopic, mqtt_msg);
@@ -921,54 +697,12 @@ void genericmqtt_client_XCube_sample_run(void)
                             snprintf(mqtt_pubtopic, MQTT_TOPIC_BUFFER_SIZE, "/devices/%s/status", device_config->MQClientId);
 #endif
 
-<<<<<<< HEAD
-                            /***
-                            //!! The time(NULL) causes exception!!
-                            ret = snprintf( mqtt_msg, MQTT_MSG_BUFFER_SIZE, "{\n \"state\": {\n  \"reported\": {\n"
-                               "   \"LedOn\": %s,\n"
-                               "   \"TelemetryInterval\": %d,\n"
-                               "   \"ts\": %ld, \"mac\": \"%s\"\n"
-                               "  }\n }\n}",
-                               (status_data.LedOn == true) ? "true" : "false",
-                               (int) status_data.TelemetryInterval,
-                               time(NULL),
-                               pub_data.mac);
-                              ***/
-
-
-                            /***
-                             * Work!
-                             ***/
-
-
-                            /**
-                             * Bits to binary (string format)
-                             */
-                            char douts[32];
-                            for(int i=0; i<NUM_DIGITAL_OUTPUTS; i++) {
-                            	douts[NUM_DIGITAL_OUTPUTS-i-1] = (digital_outputs[i] == true) ? '1' : '0';
-                            }
-                            douts[NUM_DIGITAL_OUTPUTS] = 0;
-
-                            /**
-                             * Bits to Integer
-                             */
-                            int  dval = 0;
-                            for(int i=0; i<NUM_DIGITAL_OUTPUTS; i++) {
-                            	dval<<=1;
-                            	dval |= (int)digital_outputs[NUM_DIGITAL_OUTPUTS-i-1];
-                            }
-
-=======
->>>>>>> 0e3bcac1b1c7f466643ccc49a344943778306564
                             uint32_t ts = time(NULL); /* last_telemetry_time_ms; */
 
                             ret = snprintf(mqtt_msg, MQTT_MSG_BUFFER_SIZE, "{\n \"state\": {\n  \"reported\": {\n"
-                                "   \"DigitalOutputs\": \"%s %d 0x%.3X\",\n"
                                 "   \"TelemetryInterval\": %d,\n"
                                 "   \"ts\": %ld, \"mac\": \"%s\", \"devId\": \"%s\"\n"
                                 "  }\n }\n}",
-								douts, dval,dval,
                                 (int)status_data.TelemetryInterval,
                                 ts,
                                 pub_data.mac,

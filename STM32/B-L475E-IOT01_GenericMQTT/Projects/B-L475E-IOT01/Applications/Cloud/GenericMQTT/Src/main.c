@@ -49,7 +49,7 @@
 #include "main.h"
 
 
-#define SIMPLE_IO_TESTING
+//#define SIMPLE_IO_TESTING
 
 
 /**
@@ -111,19 +111,22 @@ int main(void) {
 }
 
 
-
+#ifdef SIMPLE_IO_TESTING
 static void IO_Tester(void) {
 
 	bool state = false;
 	while(true){
-		state = Button_WaitForPush(200) ? !state : state;
-		for(int i=0; i<=9; i++) {
-			Digital_Output_Set(i, state);
-			printf("Out: %d, Data: %d\r\n", i, (int)state);
+		if(Button_WaitForPush(200)) {
+			state = !state;
+			for(int i=0; i<=9; i++) {
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_9, state);
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4 | GPIO_PIN_5, state);
+				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2 | GPIO_PIN_14, state);
+			}
 		}
 	}
 }
-
+#endif
 
 
 static void BOARD_Init(void) {
@@ -202,46 +205,6 @@ static void MX_GPIO_Init(void)
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
-
-<<<<<<< HEAD
-=======
-/**
-  * @brief  Main program
-  * @param  None
-  * @retval Status
-  */
-int main(void)
-{
-    HAL_Init();
-
-    /* Configure the system clock */
-    SystemClock_Config();
-    Periph_Config();
-    BSP_LED_Init(LED_GREEN);
-    BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
-
-    /* RNG init function */
-    hrng.Instance = RNG;
-    if (HAL_RNG_Init(&hrng) != HAL_OK)
-    {
-        Error_Handler();
-    }
-
-    /* RTC init */
-    RTC_Init();
-
-    /* UART console init */
-    Console_UART_Init();
-
-#ifdef FIREWALL_MBEDLIB
-    firewall_init();
-#endif
-
-    MX_GPIO_Init();
-    cloud_test(0);
-}
-
->>>>>>> 0e3bcac1b1c7f466643ccc49a344943778306564
 
 /**
   * @brief  System Clock Configuration
