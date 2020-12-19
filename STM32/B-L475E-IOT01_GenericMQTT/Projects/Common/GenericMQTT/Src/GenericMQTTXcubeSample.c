@@ -58,6 +58,10 @@
 #include "cJSON.h"
 #include "GenericMQTTXCubeSample.h"
 
+
+extern void mqtt_connected_to_server(void *params);
+extern void mqtt_on_message_received(const char* topic, const char *message);
+
 /* The init/deinit netif functions are called from cloud.c.
  * However, the application needs to reinit whenever the connectivity seems to be broken. */
 extern int net_if_reinit(void* if_ctxt);
@@ -66,7 +70,7 @@ extern int net_if_reinit(void* if_ctxt);
 /* Private define ------------------------------------------------------------*/
 #define MODEL_MAC_SIZE                    13
 #define MODEL_DEFAULT_MAC                 "0102030405"
-#define MODEL_DEFAULT_LEDON               true
+#define MODEL_DEFAULT_LEDON               false
 #define MODEL_DEFAULT_TELEMETRYINTERVAL   5 /* 15 */
 /* Uncomment one of the below defines to use an alternative MQTT service */
 /* #define LITMUS_LOOP */
@@ -249,6 +253,107 @@ int network_write(Network* n, unsigned char* buffer, int len, int timeout_ms)
     return rc;
 }
 
+/**
+ * Digital Outputs
+ *   [0]: A0		PC5
+ *   [1]: A1		PC4
+ *   [2]: A2		PC3
+ *   [3]: A3		PC2
+ *   [4]: A4		PC1
+ *   [5]: A5		PC0
+ *   [6]: LED1		PA5
+ *   [7]: LED2		PB14
+ *   [8]: LED3		PC9		LED3&LED4 (Wi-Fi/Bluetooth)
+ */
+
+#define BIT_A0		0
+#define BIT_A1		1
+#define BIT_A2		2
+#define BIT_A3		3
+#define BIT_A4		4
+#define BIT_A5		5
+#define BIT_LED1	6
+#define BIT_LED2	7
+#define BIT_LED3	8
+
+#define NUM_DIGITAL_OUTPUTS	9
+static bool digital_outputs[NUM_DIGITAL_OUTPUTS] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+static void digital_outputs_update(void) {
+
+	for(int i=0; i<=5; i++) {
+		HAL_GPIO_WritePin(GPIOC, (uint16_t)(1<<(5-i)), (int)digital_outputs[i]);	// A<5:0>
+	}
+
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,  (int)digital_outputs[6]);	// LED1
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, (int)digital_outputs[7]);	// LED2
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  (int)digital_outputs[8]);	// LED3/LED4
+
+	status_data.LedOn = digital_outputs[BIT_LED2];
+}
+
+void Digital_Output_Set(int16_t BitId, bool BitData) {
+
+	if( BitId>=0 && BitId<=5 ) {
+		digital_outputs[BitId] = BitData;
+		g_statusChanged = true;
+		//HAL_GPIO_WritePin(GPIOC, (uint16_t)(1<<(5-BitId)), (int)digital_outputs[BitId]);	// A<5:0>
+	}
+	else if( BitId == BIT_LED1 ) {
+		digital_outputs[BIT_LED1] = BitData;
+		g_statusChanged = true;
+		//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,  (int)digital_outputs[BIT_LED1]);	// LED1
+	}
+	else if( BitId == BIT_LED2 ) {
+		digital_outputs[BIT_LED2] = BitData;
+		g_statusChanged = true;
+		//HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, (int)digital_outputs[BIT_LED2]);	// LED2
+	}
+	else if( BitId == BIT_LED3 ) {
+		digital_outputs[BIT_LED3] = BitData;
+		g_statusChanged = true;
+		//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  (int)digital_outputs[BIT_LED3]);	// LED3/LED4
+	}
+
+	if(g_statusChanged == true) {
+		digital_outputs_update();
+	}
+}
+
+
+
+void Led_Blue_Orange_Blink(int period, int duty, int count)
+{
+    if ((duty > 0) && (period >= duty))
+    {
+        /*  Shape:   ____
+                      on |_off__ */
+        do
+        {
+        	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  GPIO_PIN_SET); 	// LED3/LED4
+            HAL_Delay(duty);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  GPIO_PIN_RESET); // LED3/LED4
+            HAL_Delay(period - duty);
+        } while (count--);
+    }
+    if ((duty < 0) && (period >= -duty))
+    {
+        /*  Shape:         ____
+                    __off_| on   */
+        do
+        {
+        	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  GPIO_PIN_RESET); // LED3/LED4
+            HAL_Delay(period + duty);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  GPIO_PIN_SET); 	// LED3/LED4
+            HAL_Delay(-duty);
+        } while (count--);
+    }
+
+    // Restore
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  (int)digital_outputs[BIT_LED3]);	// LED3/LED4
+}
+
+
 /** Message callback
  *
  *  Note: No context handle is passed by the callback. Must rely on static variables.
@@ -261,7 +366,9 @@ void allpurposeMessageHandler(MessageData* data)
 	 * Print
 	 */
 	snprintf(mqtt_msg, MIN(MQTT_MSG_BUFFER_SIZE, data->message->payloadlen + 1), "%s", (char *)data->message->payload);
-	msg_info("Received message: topic: %.*s content: %s.\n", data->topicName->lenstring.len, data->topicName->lenstring.data, mqtt_msg);
+	msg_info("\nReceived message: topic: %.*s content: %s.\n", data->topicName->lenstring.len, data->topicName->lenstring.data, mqtt_msg);
+
+
 
 
 	/**
@@ -271,19 +378,103 @@ void allpurposeMessageHandler(MessageData* data)
 	cJSON *root = cJSON_Parse(mqtt_msg);
 
 
+
+
+	for(int i=0; i<3; i++) {
+			char key[64];
+			sprintf(key, "Led%d", i+1);
+			json = cJSON_GetObjectItemCaseSensitive(root, key);
+			if(json != NULL) {
+				if (cJSON_IsBool(json) == true) {
+					digital_outputs[i+6] = (cJSON_IsTrue(json) == true);
+					digital_outputs_update();
+					g_statusChanged = true;
+					break;
+				}
+				else if( (cJSON_IsString(json) == true) ) {
+					if( (strcmp(json->valuestring, "toggle") == 0) || (strcmp(json->valuestring, "inv") == 0)) {
+						digital_outputs[i+6] = !digital_outputs[i+6];
+						digital_outputs_update();
+						g_statusChanged = true;
+						break;
+					}
+					else if( (strcmp(json->valuestring, "set") == 0) ) {
+						digital_outputs[i+6] = true;
+						digital_outputs_update();
+						g_statusChanged = true;
+						break;
+					}
+					else if( (strcmp(json->valuestring, "reset") == 0) || (strcmp(json->valuestring, "clear") == 0) || (strcmp(json->valuestring, "clr") == 0)) {
+						digital_outputs[i+6] = false;
+						digital_outputs_update();
+						g_statusChanged = true;
+						break;
+					}
+				}
+				else {
+					msg_error("JSON parsing error of Led value.\n");
+				}
+			}
+		}
+
+
 	/**
-	 * Key: LedOn
-	 * Val: true, false
+	 * DigitalOutput<5:NUM_DIGITAL_OUTPUTS-1>
 	 */
-	json = cJSON_GetObjectItemCaseSensitive(root, "LedOn");
+
+	for(int i=0; i<NUM_DIGITAL_OUTPUTS; i++) {
+		char key[64];
+		sprintf(key, "DigitalOutput%d", i);
+		json = cJSON_GetObjectItemCaseSensitive(root, key);
+		if(json != NULL) {
+			if (cJSON_IsBool(json) == true) {
+				digital_outputs[i] = (cJSON_IsTrue(json) == true);
+				digital_outputs_update();
+				g_statusChanged = true;
+				break;
+			}
+			else if( (cJSON_IsString(json) == true)  ) {
+				if( (strcmp(json->valuestring, "toggle") == 0 ) || (strcmp(json->valuestring, "inv") == 0 )) {
+					digital_outputs[i] = !digital_outputs[i];
+					digital_outputs_update();
+					g_statusChanged = true;
+					break;
+				}
+				else if( (strcmp(json->valuestring, "set") == 0 ) ) {
+					digital_outputs[i] = true;
+					digital_outputs_update();
+					g_statusChanged = true;
+					break;
+				}
+				else if( (strcmp(json->valuestring, "reset") == 0 ) || (strcmp(json->valuestring, "clear") == 0 ) || (strcmp(json->valuestring, "clr") == 0 )) {
+					digital_outputs[i] = false;
+					digital_outputs_update();
+					g_statusChanged = true;
+					break;
+				}
+			}
+			else {
+				msg_error("JSON parsing error of DigitalOutputX value.\n");
+			}
+		}
+	}
+
+	json = cJSON_GetObjectItemCaseSensitive(root, "DigitalWrite");
+	int d = 0;
 	if (json != NULL) {
-		if (cJSON_IsBool(json) == true) {
-			status_data.LedOn = (cJSON_IsTrue(json) == true);
-			Led_SetState(status_data.LedOn);
+		if (cJSON_IsNumber(json) == true) {
+
+			d = json->valueint;
+			for(int j=0; j<NUM_DIGITAL_OUTPUTS; j++) {
+				digital_outputs[j] = ((d&1) > 0);
+				d>>=1;
+				printf("DigitalOutput[%d]: %s\n", j, ((digital_outputs[j] == true) ? "true" : "false") );
+			}
+			digital_outputs_update();
 			g_statusChanged = true;
 		}
 		else {
-			msg_error("JSON parsing error of LedOn value.\n");
+			msg_error("JSON parsing error of DigitalWrite value.\n");
 		}
 	}
 
@@ -319,11 +510,16 @@ void allpurposeMessageHandler(MessageData* data)
 	}
 
 
+	/* Visual notification of the Received message: LED blink. */
+	Led_Blue_Orange_Blink(40, 10, 4);
+
 	/**
 	 * Cleanup
 	 */
 	cJSON_Delete(root);
 }
+
+
 
 
 /** Main loop */
@@ -353,43 +549,48 @@ void genericmqtt_client_XCube_sample_run(void)
 
     ret = platform_init();
 
-    if (ret != 0)
-    {
+    if (ret != 0) {
         msg_error("Failed to initialize the platform.\n");
     }
-    else
-    {
-        ret = (getIoTDeviceConfig(&connectionString) != 0);
+    else {
+        ret = ( getIoTDeviceConfig(&connectionString ) != 0);
         ret |= (parse_and_fill_device_config(&device_config, connectionString) != 0);
 
         connection_security = (conn_sec_t)atoi(device_config->ConnSecurity);
     }
 
-    if (ret != 0)
-    {
+    if (ret != 0) {
         msg_error("Cannot retrieve the connection string from the user configuration storage.\n");
     }
-    else
-    {
-        /* Initialize the defaults of the published messages. */
+    else {
+
+
+    	/**
+    	 * Initialize the defaults of the published messages.
+    	 */
         net_macaddr_t mac = { 0 };
-        if (net_get_mac_address(hnet, &mac) == NET_OK)
-        {
+        if (net_get_mac_address(hnet, &mac) == NET_OK) {
         	//** snprintf(status_data.mac, MODEL_MAC_SIZE - 1, "%02X%02X%02X%02X%02X%02X", mac.mac[0], mac.mac[1], mac.mac[2], mac.mac[3], mac.mac[4], mac.mac[5]);
         	sprintf(status_data.mac, "%02X%02X%02X%02X%02X%02X", mac.mac[0], mac.mac[1], mac.mac[2], mac.mac[3], mac.mac[4], mac.mac[5]);
 
         }
-        else
-        {
+        else {
             msg_warning("Could not retrieve the MAC address to set the device ID.\n");
             //** snprintf(status_data.mac, MODEL_MAC_SIZE - 1, "MyDevice-UnknownMAC");
             sprintf(status_data.mac, "%s", "UnknownMAC");
         }
         strncpy(pub_data.mac, status_data.mac, MODEL_MAC_SIZE - 1);
 
+
+
+
+
         status_data.TelemetryInterval = MODEL_DEFAULT_TELEMETRYINTERVAL;
 
-        /* Re-connection loop: Socket level, with a netIf reconnect in case of repeated socket failures. */
+
+        /**
+         * Re-connection loop: Socket level, with a netIf reconnect in case of repeated socket failures.
+         */
         do
         {
             /* Init MQTT client */
@@ -397,19 +598,18 @@ void genericmqtt_client_XCube_sample_run(void)
             net_ipaddr_t ip;
             int ret = 0;
 
+
             /* If the socket connection failed MAX_SOCKET_ERRORS_BEFORE_NETIF_RESET times in a row,
              * even if the netif still has a valid IP address, we assume that the network link is down
-             * and must be reset. */
-            if ((net_get_ip_address(hnet, &ip) == NET_ERR) || (g_connection_needed_score > MAX_SOCKET_ERRORS_BEFORE_NETIF_RESET))
-            {
+             * and must be reset.
+             */
+            if ((net_get_ip_address(hnet, &ip) == NET_ERR) || (g_connection_needed_score > MAX_SOCKET_ERRORS_BEFORE_NETIF_RESET)) {
                 msg_info("Network link %s down. Trying to reconnect.\n", (g_connection_needed_score > MAX_SOCKET_ERRORS_BEFORE_NETIF_RESET) ? "may be" : "");
-                if (net_reinit(hnet, (net_if_reinit)) != 0)
-                {
+                if (net_reinit(hnet, (net_if_reinit)) != 0) {
                     msg_error("Netif re-initialization failed.\n");
                     continue;
                 }
-                else
-                {
+                else  {
                     msg_info("Netif re-initialized successfully.\n");
                     HAL_Delay(1000);
                     g_connection_needed_score = 1;
@@ -417,17 +617,13 @@ void genericmqtt_client_XCube_sample_run(void)
             }
 
             ret = net_sock_create(hnet, &socket, (connection_security == CONN_SEC_NONE) ? NET_PROTO_TCP : NET_PROTO_TLS);
-            if (ret != NET_OK)
-            {
+            if (ret != NET_OK) {
                 msg_error("Could not create the socket.\n");
             }
-            else
-            {
-                switch (connection_security)
-                {
+            else {
+                switch (connection_security) {
                 case CONN_SEC_MUTUALAUTH:
-                    ret |= ((checkTLSRootCA() != 0) && (checkTLSDeviceConfig() != 0))
-                        || (getTLSKeys(&ca_cert, &device_cert, &device_key) != 0);
+                    ret |= ((checkTLSRootCA() != 0) && (checkTLSDeviceConfig() != 0)) || (getTLSKeys(&ca_cert, &device_cert, &device_key) != 0);
                     ret |= net_sock_setopt(socket, "tls_server_name", (void*)device_config->HostName, strlen(device_config->HostName) + 1);
                     ret |= net_sock_setopt(socket, "tls_ca_certs", (void*)ca_cert, strlen(ca_cert) + 1);
                     ret |= net_sock_setopt(socket, "tls_dev_cert", (void*)device_cert, strlen(device_cert) + 1);
@@ -450,49 +646,54 @@ void genericmqtt_client_XCube_sample_run(void)
                     break;
                 default:
                     msg_error("Invalid connection security mode. - %d\n", connection_security);
-                }
+                }// switch
+
                 ret |= net_sock_setopt(socket, "sock_noblocking", NULL, 0);
             }
 
-            if (ret != NET_OK)
-            {
+            if (ret != NET_OK) {
                 msg_error("Could not retrieve the security connection settings and set the socket options.\n");
             }
-            else
-            {
+            else {
                 ret = net_sock_open(socket, device_config->HostName, atoi(device_config->HostPort), 0);
             }
 
-            if (ret != NET_OK)
-            {
+            if (ret != NET_OK) {
                 msg_error("Could not open the socket at %s port %d.\n", device_config->HostName, atoi(device_config->HostPort));
                 g_connection_needed_score++;
                 HAL_Delay(1000);
             }
-            else
-            {
-                network.my_socket = socket;
-                network.mqttread = (network_read);
-                network.mqttwrite = (network_write);
+            else {
 
+
+            	/**
+				 * Init MQTT Client
+				 */
+                network.my_socket = socket;
+                network.mqttread  = (network_read);
+                network.mqttwrite = (network_write);
                 MQTTClientInit(&client, &network, MQTT_CMD_TIMEOUT, mqtt_send_buffer, MQTT_SEND_BUFFER_SIZE, mqtt_read_buffer, MQTT_READ_BUFFER_SIZE);
 
-                /* MQTT connect */
-                MQTTPacket_connectData options = MQTTPacket_connectData_initializer;
 
+                /**
+                 * MQTT Connect
+                 */
+                MQTTPacket_connectData options = MQTTPacket_connectData_initializer;
                 options.clientID.cstring = device_config->MQClientId;
                 options.username.cstring = device_config->MQUserName;
                 options.password.cstring = device_config->MQUserPwd;
-
                 ret = MQTTConnect(&client, &options);
-                if (ret != 0)
-                {
+                if (ret != 0) {
                     msg_error("MQTTConnect() failed: %d\n", ret);
                 }
-                else
-                {
+                else {
+
+                	/**
+					 * Connected
+					 */
                     g_connection_needed_score = 0;
                     b_mqtt_connected = true;
+
 #ifdef LITMUS_LOOP
                     snprintf(mqtt_subtopic, MQTT_TOPIC_BUFFER_SIZE, "loop/req/%s/json", device_config->LoopTopicId);
 #elif defined(UBIDOTS_MQTT)
@@ -501,26 +702,27 @@ void genericmqtt_client_XCube_sample_run(void)
                     snprintf(mqtt_subtopic, MQTT_TOPIC_BUFFER_SIZE, "/devices/%s/control", device_config->MQClientId);
 #endif /* LITMUS_LOOP */
                     ret = MQTTSubscribe(&client, mqtt_subtopic, QOS0, (allpurposeMessageHandler));
+
+
+                    /**
+                     * MQTT_UserCallback -------------------------------------------------------------------------------------------
+                     */
+                    mqtt_connected_to_server(&client);
                 }
 
                 /* ret = MQTTSetMessageHandler(&client, "#", (allpurposeMessageHandler)); */
 
-                if (ret != MQSUCCESS)
-                {
+                if (ret != MQSUCCESS) {
                     msg_error("Failed subscribing to the %s topic.\n", mqtt_subtopic);
                 }
-                else
-                {
+                else {
                     msg_info("Subscribed to %s.\n", mqtt_subtopic);
                     ret = MQTTYield(&client, 500);
                 }
-
-                if (ret != MQSUCCESS)
-                {
+                if (ret != MQSUCCESS) {
                     msg_error("Yield failed.\n");
                 }
-                else
-                {
+                else {
 
 #ifdef LITMUS_LOOP
                     /* Device information data update */
@@ -562,14 +764,19 @@ void genericmqtt_client_XCube_sample_run(void)
                     }
 #endif /* LITMUS_LOOP */
 
-                    /* Send the telemetry data, and send the device status if it was changed by a received message. */
+
+                    /**
+                     * Send the telemetry data, and send the device status if it was changed by a received message.
+                     */
                     uint32_t last_telemetry_time_ms = HAL_GetTick();
-                    do
-                    {
+                    do {
+
                         uint8_t command = Button_WaitForMultiPush(500);
-                        bool b_sample_data = (command == BP_SINGLE_PUSH); /* If short button push, publish once. */
-                        if (command == BP_MULTIPLE_PUSH)                  /* If long button push, toggle the telemetry publication. */
-                        {
+
+                        bool b_sample_data = (command == BP_SINGLE_PUSH); 	/* If short button push, publish once. */
+
+                        if (command == BP_MULTIPLE_PUSH){              		/* If long button push, toggle the telemetry publication. */
+
                             g_publishData = !g_publishData;
                             msg_info("%s the sensor values publication loop.\n", (g_publishData == true) ? "Enter" : "Exit");
                         }
@@ -677,18 +884,19 @@ void genericmqtt_client_XCube_sample_run(void)
                                 msg_error("Telemetry message formatting error.\n");
                             }
                             else {
-                                ret = stiot_publish(&client, mqtt_pubtopic, mqtt_msg);  /* Wrapper for MQTTPublish() */
+
+                            	/**
+                            	 * MQTTPublish()
+                            	 */
+                                ret = stiot_publish(&client, mqtt_pubtopic, mqtt_msg);
                                 if (ret == MQSUCCESS)  {
 
                                     /* Visual notification of the telemetry publication: LED blink. */
-                                    Led_Blink(80, 40, 5);
-
-                                    /* Restore the LED state */
-                                    Led_SetState(status_data.LedOn);
+                                	Led_Blue_Orange_Blink(50, 25, 5);
 
 
                                     msg_info("#\n");
-                                    msg_info("publication topic: %s \tpayload: %s\n", mqtt_pubtopic, mqtt_msg);
+                                    msg_info("publication topic: %s \npayload: %s\n", mqtt_pubtopic, mqtt_msg);
                                 }
                                 else  {
                                     msg_error("Telemetry publication failed.\n");
@@ -730,14 +938,34 @@ void genericmqtt_client_XCube_sample_run(void)
                             /***
                              * Work!
                              ***/
+
+
+                            /**
+                             * Bits to binary (string format)
+                             */
+                            char douts[32];
+                            for(int i=0; i<NUM_DIGITAL_OUTPUTS; i++) {
+                            	douts[NUM_DIGITAL_OUTPUTS-i-1] = (digital_outputs[i] == true) ? '1' : '0';
+                            }
+                            douts[NUM_DIGITAL_OUTPUTS] = 0;
+
+                            /**
+                             * Bits to Integer
+                             */
+                            int  dval = 0;
+                            for(int i=0; i<NUM_DIGITAL_OUTPUTS; i++) {
+                            	dval<<=1;
+                            	dval |= (int)digital_outputs[NUM_DIGITAL_OUTPUTS-i-1];
+                            }
+
                             uint32_t ts = time(NULL); /* last_telemetry_time_ms; */
 
                             ret = snprintf(mqtt_msg, MQTT_MSG_BUFFER_SIZE, "{\n \"state\": {\n  \"reported\": {\n"
-                                "   \"LedOn\": %s,\n"
+                                "   \"DigitalOutputs\": \"%s %d 0x%.3X\",\n"
                                 "   \"TelemetryInterval\": %d,\n"
                                 "   \"ts\": %ld, \"mac\": \"%s\", \"devId\": \"%s\"\n"
                                 "  }\n }\n}",
-                                (status_data.LedOn == true) ? "true" : "false",
+								douts, dval,dval,
                                 (int)status_data.TelemetryInterval,
                                 ts,
                                 pub_data.mac,
@@ -748,13 +976,16 @@ void genericmqtt_client_XCube_sample_run(void)
                                 msg_error("Telemetry message formatting error.\n");
                             }
                             else {
-                                ret = stiot_publish(&client, mqtt_pubtopic, mqtt_msg);  /* Wrapper for MQTTPublish() */
+                            	/**
+                            	 *   MQTTPublish()
+                            	 */
+                                ret = stiot_publish(&client, mqtt_pubtopic, mqtt_msg);
                                 if (ret != MQSUCCESS)  {
                                     msg_error("Status publication failed.\n");
                                     g_connection_needed_score++;
                                 }
                                 else {
-                                    msg_info("publication topic: %s \tpayload: %s\n", mqtt_pubtopic, mqtt_msg);
+                                    msg_info("publication topic: %s \npayload: %s\n", mqtt_pubtopic, mqtt_msg);
                                     g_statusChanged = false;
                                 }
                             }
