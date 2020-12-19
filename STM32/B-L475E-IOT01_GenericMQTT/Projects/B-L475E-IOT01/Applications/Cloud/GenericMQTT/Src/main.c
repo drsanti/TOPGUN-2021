@@ -45,8 +45,11 @@
   */
 
 
-  /* Includes ------------------------------------------------------------------*/
+/* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
+
+//#define SIMPLE_IO_TESTING
 
 
 /**
@@ -75,9 +78,83 @@ void SPI_WIFI_ISR(void);
 static void Console_UART_Init(void);
 static void RTC_Init(void);
 static void Button_ISR(void);
-static void cloud_test(void const* arg);
-
+#ifdef SIMPLE_IO_TESTING
+static void IO_Tester(void);
+extern void Digital_Output_Set(int16_t BitId, bool BitData);
+#else
+static void IoT_Start(void);
+#endif
+static void BOARD_Init(void);
+static void MX_GPIO_Init(void);
 /* Private functions ---------------------------------------------------------*/
+
+extern void mcu_initialized(void *params);
+
+
+
+/**
+  * @brief  Main program
+  * @param  None
+  * @retval Status
+  */
+int main(void) {
+
+	BOARD_Init();
+
+#ifdef SIMPLE_IO_TESTING
+	IO_Tester();
+#else
+	IoT_Start();
+#endif
+
+}
+
+
+#ifdef SIMPLE_IO_TESTING
+static void IO_Tester(void) {
+
+	bool state = false;
+	while(true){
+		if(Button_WaitForPush(200)) {
+			state = !state;
+			for(int i=0; i<=9; i++) {
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_9, state);
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4 | GPIO_PIN_5, state);
+				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2 | GPIO_PIN_14, state);
+			}
+		}
+	}
+}
+#endif
+
+
+static void BOARD_Init(void) {
+
+		HAL_Init();
+	    SystemClock_Config();
+	    Periph_Config();
+
+	    BSP_LED_Init(LED_GREEN);
+	    BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
+	    hrng.Instance = RNG;
+	    if (HAL_RNG_Init(&hrng) != HAL_OK)  {
+	        Error_Handler();
+	    }
+
+	    RTC_Init();
+	    Console_UART_Init();
+	    MX_GPIO_Init();
+
+	#ifdef FIREWALL_MBEDLIB
+	    firewall_init();
+	#endif
+}
+
+#ifndef SIMPLE_IO_TESTING
+static void IoT_Start(void) {
+	genericmqtt_client_XCube_sample_run();
+}
+#endif
 
 /**
   * @brief GPIO Initialization Function
@@ -127,43 +204,6 @@ static void MX_GPIO_Init(void)
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
-
-/**
-  * @brief  Main program
-  * @param  None
-  * @retval Status
-  */
-int main(void)
-{
-    HAL_Init();
-
-    /* Configure the system clock */
-    SystemClock_Config();
-    Periph_Config();
-    BSP_LED_Init(LED_GREEN);
-    BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
-
-    /* RNG init function */
-    hrng.Instance = RNG;
-    if (HAL_RNG_Init(&hrng) != HAL_OK)
-    {
-        Error_Handler();
-    }
-
-    /* RTC init */
-    RTC_Init();
-
-    /* UART console init */
-    Console_UART_Init();
-
-#ifdef FIREWALL_MBEDLIB
-    firewall_init();
-#endif
-
-    MX_GPIO_Init();
-    cloud_test(0);
-}
-
 
 /**
   * @brief  System Clock Configuration
@@ -309,6 +349,7 @@ uint8_t Button_WaitForPush(uint32_t delay)
 uint8_t Button_WaitForMultiPush(uint32_t delay)
 {
     HAL_Delay(delay);
+
     if (button_flags > 1)
     {
         button_flags = 0;
@@ -388,7 +429,7 @@ PUTCHAR_PROTOTYPE
 /**
   * @brief RTC init function
   */
-    static void RTC_Init(void)
+static void RTC_Init(void)
 {
     /**Initialize RTC Only */
     hrtc.Instance = RTC;
@@ -407,11 +448,6 @@ PUTCHAR_PROTOTYPE
     }
 }
 
-static void cloud_test(void const* arg)
-{
-    genericmqtt_client_XCube_sample_run();
-}
-
 
 /**
   * @brief  EXTI line detection callback.
@@ -422,22 +458,22 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     switch (GPIO_Pin)
     {
-    case (GPIO_PIN_13):
-    {
-        Button_ISR();
-        break;
-    }
+		case (GPIO_PIN_13):
+		{
+			Button_ISR();
+			break;
+		}
 
-    case (GPIO_PIN_1):
-    {
-        SPI_WIFI_ISR();
-        break;
-    }
+		case (GPIO_PIN_1):
+		{
+			SPI_WIFI_ISR();
+			break;
+		}
 
-    default:
-    {
-        break;
-    }
+		default:
+		{
+			break;
+		}
     }
 }
 

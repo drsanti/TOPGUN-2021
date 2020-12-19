@@ -58,6 +58,10 @@
 #include "cJSON.h"
 #include "GenericMQTTXCubeSample.h"
 
+
+extern void mqtt_connected_to_server(void *params);
+extern void mqtt_on_message_received(const char* topic, const char *message);
+
 /* The init/deinit netif functions are called from cloud.c.
  * However, the application needs to reinit whenever the connectivity seems to be broken. */
 extern int net_if_reinit(void* if_ctxt);
@@ -66,7 +70,7 @@ extern int net_if_reinit(void* if_ctxt);
 /* Private define ------------------------------------------------------------*/
 #define MODEL_MAC_SIZE                    13
 #define MODEL_DEFAULT_MAC                 "0102030405"
-#define MODEL_DEFAULT_LEDON               true
+#define MODEL_DEFAULT_LEDON               false
 #define MODEL_DEFAULT_TELEMETRYINTERVAL   5 /* 15 */
 /* Uncomment one of the below defines to use an alternative MQTT service */
 /* #define LITMUS_LOOP */
@@ -249,8 +253,6 @@ int network_write(Network* n, unsigned char* buffer, int len, int timeout_ms)
     return rc;
 }
 
-
-
 /** Message callback
  *
  *  Note: No context handle is passed by the callback. Must rely on static variables.
@@ -263,7 +265,9 @@ void allpurposeMessageHandler(MessageData* data)
 	 * Print
 	 */
 	snprintf(mqtt_msg, MIN(MQTT_MSG_BUFFER_SIZE, data->message->payloadlen + 1), "%s", (char *)data->message->payload);
-	msg_info("Received message: topic: %.*s content: %s.\n", data->topicName->lenstring.len, data->topicName->lenstring.data, mqtt_msg);
+	msg_info("\nReceived message: topic: %.*s content: %s.\n", data->topicName->lenstring.len, data->topicName->lenstring.data, mqtt_msg);
+
+
 
 	cJSON *json = NULL;
 	cJSON *root = cJSON_Parse(mqtt_msg);
@@ -293,6 +297,8 @@ void allpurposeMessageHandler(MessageData* data)
 }
 
 
+
+
 /** Main loop */
 void genericmqtt_client_XCube_sample_run(void)
 {
@@ -320,43 +326,48 @@ void genericmqtt_client_XCube_sample_run(void)
 
     ret = platform_init();
 
-    if (ret != 0)
-    {
+    if (ret != 0) {
         msg_error("Failed to initialize the platform.\n");
     }
-    else
-    {
-        ret = (getIoTDeviceConfig(&connectionString) != 0);
+    else {
+        ret = ( getIoTDeviceConfig(&connectionString ) != 0);
         ret |= (parse_and_fill_device_config(&device_config, connectionString) != 0);
 
         connection_security = (conn_sec_t)atoi(device_config->ConnSecurity);
     }
 
-    if (ret != 0)
-    {
+    if (ret != 0) {
         msg_error("Cannot retrieve the connection string from the user configuration storage.\n");
     }
-    else
-    {
-        /* Initialize the defaults of the published messages. */
+    else {
+
+
+    	/**
+    	 * Initialize the defaults of the published messages.
+    	 */
         net_macaddr_t mac = { 0 };
-        if (net_get_mac_address(hnet, &mac) == NET_OK)
-        {
+        if (net_get_mac_address(hnet, &mac) == NET_OK) {
         	//** snprintf(status_data.mac, MODEL_MAC_SIZE - 1, "%02X%02X%02X%02X%02X%02X", mac.mac[0], mac.mac[1], mac.mac[2], mac.mac[3], mac.mac[4], mac.mac[5]);
         	sprintf(status_data.mac, "%02X%02X%02X%02X%02X%02X", mac.mac[0], mac.mac[1], mac.mac[2], mac.mac[3], mac.mac[4], mac.mac[5]);
 
         }
-        else
-        {
+        else {
             msg_warning("Could not retrieve the MAC address to set the device ID.\n");
             //** snprintf(status_data.mac, MODEL_MAC_SIZE - 1, "MyDevice-UnknownMAC");
             sprintf(status_data.mac, "%s", "UnknownMAC");
         }
         strncpy(pub_data.mac, status_data.mac, MODEL_MAC_SIZE - 1);
 
+
+
+
+
         status_data.TelemetryInterval = MODEL_DEFAULT_TELEMETRYINTERVAL;
 
-        /* Re-connection loop: Socket level, with a netIf reconnect in case of repeated socket failures. */
+
+        /**
+         * Re-connection loop: Socket level, with a netIf reconnect in case of repeated socket failures.
+         */
         do
         {
             /* Init MQTT client */
@@ -364,19 +375,18 @@ void genericmqtt_client_XCube_sample_run(void)
             net_ipaddr_t ip;
             int ret = 0;
 
+
             /* If the socket connection failed MAX_SOCKET_ERRORS_BEFORE_NETIF_RESET times in a row,
              * even if the netif still has a valid IP address, we assume that the network link is down
-             * and must be reset. */
-            if ((net_get_ip_address(hnet, &ip) == NET_ERR) || (g_connection_needed_score > MAX_SOCKET_ERRORS_BEFORE_NETIF_RESET))
-            {
+             * and must be reset.
+             */
+            if ((net_get_ip_address(hnet, &ip) == NET_ERR) || (g_connection_needed_score > MAX_SOCKET_ERRORS_BEFORE_NETIF_RESET)) {
                 msg_info("Network link %s down. Trying to reconnect.\n", (g_connection_needed_score > MAX_SOCKET_ERRORS_BEFORE_NETIF_RESET) ? "may be" : "");
-                if (net_reinit(hnet, (net_if_reinit)) != 0)
-                {
+                if (net_reinit(hnet, (net_if_reinit)) != 0) {
                     msg_error("Netif re-initialization failed.\n");
                     continue;
                 }
-                else
-                {
+                else  {
                     msg_info("Netif re-initialized successfully.\n");
                     HAL_Delay(1000);
                     g_connection_needed_score = 1;
@@ -384,17 +394,13 @@ void genericmqtt_client_XCube_sample_run(void)
             }
 
             ret = net_sock_create(hnet, &socket, (connection_security == CONN_SEC_NONE) ? NET_PROTO_TCP : NET_PROTO_TLS);
-            if (ret != NET_OK)
-            {
+            if (ret != NET_OK) {
                 msg_error("Could not create the socket.\n");
             }
-            else
-            {
-                switch (connection_security)
-                {
+            else {
+                switch (connection_security) {
                 case CONN_SEC_MUTUALAUTH:
-                    ret |= ((checkTLSRootCA() != 0) && (checkTLSDeviceConfig() != 0))
-                        || (getTLSKeys(&ca_cert, &device_cert, &device_key) != 0);
+                    ret |= ((checkTLSRootCA() != 0) && (checkTLSDeviceConfig() != 0)) || (getTLSKeys(&ca_cert, &device_cert, &device_key) != 0);
                     ret |= net_sock_setopt(socket, "tls_server_name", (void*)device_config->HostName, strlen(device_config->HostName) + 1);
                     ret |= net_sock_setopt(socket, "tls_ca_certs", (void*)ca_cert, strlen(ca_cert) + 1);
                     ret |= net_sock_setopt(socket, "tls_dev_cert", (void*)device_cert, strlen(device_cert) + 1);
@@ -417,49 +423,54 @@ void genericmqtt_client_XCube_sample_run(void)
                     break;
                 default:
                     msg_error("Invalid connection security mode. - %d\n", connection_security);
-                }
+                }// switch
+
                 ret |= net_sock_setopt(socket, "sock_noblocking", NULL, 0);
             }
 
-            if (ret != NET_OK)
-            {
+            if (ret != NET_OK) {
                 msg_error("Could not retrieve the security connection settings and set the socket options.\n");
             }
-            else
-            {
+            else {
                 ret = net_sock_open(socket, device_config->HostName, atoi(device_config->HostPort), 0);
             }
 
-            if (ret != NET_OK)
-            {
+            if (ret != NET_OK) {
                 msg_error("Could not open the socket at %s port %d.\n", device_config->HostName, atoi(device_config->HostPort));
                 g_connection_needed_score++;
                 HAL_Delay(1000);
             }
-            else
-            {
-                network.my_socket = socket;
-                network.mqttread = (network_read);
-                network.mqttwrite = (network_write);
+            else {
 
+
+            	/**
+				 * Init MQTT Client
+				 */
+                network.my_socket = socket;
+                network.mqttread  = (network_read);
+                network.mqttwrite = (network_write);
                 MQTTClientInit(&client, &network, MQTT_CMD_TIMEOUT, mqtt_send_buffer, MQTT_SEND_BUFFER_SIZE, mqtt_read_buffer, MQTT_READ_BUFFER_SIZE);
 
-                /* MQTT connect */
-                MQTTPacket_connectData options = MQTTPacket_connectData_initializer;
 
+                /**
+                 * MQTT Connect
+                 */
+                MQTTPacket_connectData options = MQTTPacket_connectData_initializer;
                 options.clientID.cstring = device_config->MQClientId;
                 options.username.cstring = device_config->MQUserName;
                 options.password.cstring = device_config->MQUserPwd;
-
                 ret = MQTTConnect(&client, &options);
-                if (ret != 0)
-                {
+                if (ret != 0) {
                     msg_error("MQTTConnect() failed: %d\n", ret);
                 }
-                else
-                {
+                else {
+
+                	/**
+					 * Connected
+					 */
                     g_connection_needed_score = 0;
                     b_mqtt_connected = true;
+
 #ifdef LITMUS_LOOP
                     snprintf(mqtt_subtopic, MQTT_TOPIC_BUFFER_SIZE, "loop/req/%s/json", device_config->LoopTopicId);
 #elif defined(UBIDOTS_MQTT)
@@ -468,26 +479,24 @@ void genericmqtt_client_XCube_sample_run(void)
                     snprintf(mqtt_subtopic, MQTT_TOPIC_BUFFER_SIZE, "/devices/%s/control", device_config->MQClientId);
 #endif /* LITMUS_LOOP */
                     ret = MQTTSubscribe(&client, mqtt_subtopic, QOS0, (allpurposeMessageHandler));
+
+
+
                 }
 
                 /* ret = MQTTSetMessageHandler(&client, "#", (allpurposeMessageHandler)); */
 
-                if (ret != MQSUCCESS)
-                {
+                if (ret != MQSUCCESS) {
                     msg_error("Failed subscribing to the %s topic.\n", mqtt_subtopic);
                 }
-                else
-                {
+                else {
                     msg_info("Subscribed to %s.\n", mqtt_subtopic);
                     ret = MQTTYield(&client, 500);
                 }
-
-                if (ret != MQSUCCESS)
-                {
+                if (ret != MQSUCCESS) {
                     msg_error("Yield failed.\n");
                 }
-                else
-                {
+                else {
 
 #ifdef LITMUS_LOOP
                     /* Device information data update */
@@ -529,14 +538,19 @@ void genericmqtt_client_XCube_sample_run(void)
                     }
 #endif /* LITMUS_LOOP */
 
-                    /* Send the telemetry data, and send the device status if it was changed by a received message. */
+
+                    /**
+                     * Send the telemetry data, and send the device status if it was changed by a received message.
+                     */
                     uint32_t last_telemetry_time_ms = HAL_GetTick();
-                    do
-                    {
+                    do {
+
                         uint8_t command = Button_WaitForMultiPush(500);
-                        bool b_sample_data = (command == BP_SINGLE_PUSH); /* If short button push, publish once. */
-                        if (command == BP_MULTIPLE_PUSH)                  /* If long button push, toggle the telemetry publication. */
-                        {
+
+                        bool b_sample_data = (command == BP_SINGLE_PUSH); 	/* If short button push, publish once. */
+
+                        if (command == BP_MULTIPLE_PUSH){              		/* If long button push, toggle the telemetry publication. */
+
                             g_publishData = !g_publishData;
                             msg_info("%s the sensor values publication loop.\n", (g_publishData == true) ? "Enter" : "Exit");
                         }
@@ -644,18 +658,18 @@ void genericmqtt_client_XCube_sample_run(void)
                                 msg_error("Telemetry message formatting error.\n");
                             }
                             else {
-                                ret = stiot_publish(&client, mqtt_pubtopic, mqtt_msg);  /* Wrapper for MQTTPublish() */
+
+                            	/**
+                            	 * MQTTPublish()
+                            	 */
+                                ret = stiot_publish(&client, mqtt_pubtopic, mqtt_msg);
                                 if (ret == MQSUCCESS)  {
 
                                     /* Visual notification of the telemetry publication: LED blink. */
-                                    Led_Blink(80, 40, 5);
-
-                                    /* Restore the LED state */
-                                    Led_SetState(status_data.LedOn);
-
+                                	Led_Blink(50, 25, 5);
 
                                     msg_info("#\n");
-                                    msg_info("publication topic: %s \tpayload: %s\n", mqtt_pubtopic, mqtt_msg);
+                                    msg_info("publication topic: %s \npayload: %s\n", mqtt_pubtopic, mqtt_msg);
                                 }
                                 else  {
                                     msg_error("Telemetry publication failed.\n");
@@ -683,11 +697,9 @@ void genericmqtt_client_XCube_sample_run(void)
                             uint32_t ts = time(NULL); /* last_telemetry_time_ms; */
 
                             ret = snprintf(mqtt_msg, MQTT_MSG_BUFFER_SIZE, "{\n \"state\": {\n  \"reported\": {\n"
-                                "   \"LedOn\": %s,\n"
                                 "   \"TelemetryInterval\": %d,\n"
                                 "   \"ts\": %ld, \"mac\": \"%s\", \"devId\": \"%s\"\n"
                                 "  }\n }\n}",
-                                (status_data.LedOn == true) ? "true" : "false",
                                 (int)status_data.TelemetryInterval,
                                 ts,
                                 pub_data.mac,
@@ -698,13 +710,16 @@ void genericmqtt_client_XCube_sample_run(void)
                                 msg_error("Telemetry message formatting error.\n");
                             }
                             else {
-                                ret = stiot_publish(&client, mqtt_pubtopic, mqtt_msg);  /* Wrapper for MQTTPublish() */
+                            	/**
+                            	 *   MQTTPublish()
+                            	 */
+                                ret = stiot_publish(&client, mqtt_pubtopic, mqtt_msg);
                                 if (ret != MQSUCCESS)  {
                                     msg_error("Status publication failed.\n");
                                     g_connection_needed_score++;
                                 }
                                 else {
-                                    msg_info("publication topic: %s \tpayload: %s\n", mqtt_pubtopic, mqtt_msg);
+                                    msg_info("publication topic: %s \npayload: %s\n", mqtt_pubtopic, mqtt_msg);
                                     g_statusChanged = false;
                                 }
                             }

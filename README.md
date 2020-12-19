@@ -8,7 +8,9 @@ Documents, Codes, Tools, Examples and other resources for TESA TOPGUN-2021 will 
 
 :books: [TESA-Topgun-MQTT-Experimental-System-Setup-v1.0.1.pdf](./docs/TESA-Topgun-MQTT-Experimental-System-Setup-v1.0.1.pdf)
 
-:books: [TESA-Topgun-B-L475E-IOT01A1-v1.0.0.pdf](./docs/TESA-Topgun-B-L475E-IOT01A1-v1.0.0.pdf)
+:books: [TESA-Topgun-B-L475E-IOT01A1-IO-Testing-v1.0.0.pdf](./docs/TESA-Topgun-B-L475E-IOT01A1-IO-Testing-v1.0.0.pdf)
+
+:books: [TESA-Topgun-B-L475E-IOT01A1-IO-Testing-v1.0.0.pdf](./docs/TESA-Topgun-B-L475E-IOT01A1-IO-Testing-v1.0.0.pdf)
 
 ---
 
