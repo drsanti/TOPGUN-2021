@@ -203,6 +203,45 @@ static void MX_GPIO_Init(void)
 
 }
 
+<<<<<<< HEAD
+=======
+/**
+  * @brief  Main program
+  * @param  None
+  * @retval Status
+  */
+int main(void)
+{
+    HAL_Init();
+
+    /* Configure the system clock */
+    SystemClock_Config();
+    Periph_Config();
+    BSP_LED_Init(LED_GREEN);
+    BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
+
+    /* RNG init function */
+    hrng.Instance = RNG;
+    if (HAL_RNG_Init(&hrng) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    /* RTC init */
+    RTC_Init();
+
+    /* UART console init */
+    Console_UART_Init();
+
+#ifdef FIREWALL_MBEDLIB
+    firewall_init();
+#endif
+
+    MX_GPIO_Init();
+    cloud_test(0);
+}
+
+>>>>>>> 0e3bcac1b1c7f466643ccc49a344943778306564
 
 /**
   * @brief  System Clock Configuration

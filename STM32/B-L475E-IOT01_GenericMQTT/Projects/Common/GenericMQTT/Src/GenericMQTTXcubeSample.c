@@ -253,6 +253,7 @@ int network_write(Network* n, unsigned char* buffer, int len, int timeout_ms)
     return rc;
 }
 
+<<<<<<< HEAD
 /**
  * Digital Outputs
  *   [0]: A0		PC5
@@ -352,6 +353,8 @@ void Led_Blue_Orange_Blink(int period, int duty, int count)
     // Restore
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  (int)digital_outputs[BIT_LED3]);	// LED3/LED4
 }
+=======
+>>>>>>> 0e3bcac1b1c7f466643ccc49a344943778306564
 
 
 /** Message callback
@@ -370,13 +373,10 @@ void allpurposeMessageHandler(MessageData* data)
 
 
 
-
-	/**
-	 * JSON
-	 */
 	cJSON *json = NULL;
 	cJSON *root = cJSON_Parse(mqtt_msg);
 
+<<<<<<< HEAD
 
 
 
@@ -483,6 +483,8 @@ void allpurposeMessageHandler(MessageData* data)
 	 * Key: TelemetryInterval
 	 * Val: int
 	 */
+=======
+>>>>>>> 0e3bcac1b1c7f466643ccc49a344943778306564
 	json = cJSON_GetObjectItemCaseSensitive(root, "TelemetryInterval");
 	if (json != NULL) {
 		if (cJSON_IsNumber(json) == true)  {
@@ -494,11 +496,6 @@ void allpurposeMessageHandler(MessageData* data)
 		}
 	}
 
-
-	/**
-	 * Key: Reboot
-	 * Val: true
-	 */
 	json = cJSON_GetObjectItemCaseSensitive(root, "Reboot");
 	if (json != NULL) {
 		if (cJSON_IsBool(json) == true) {
@@ -509,6 +506,7 @@ void allpurposeMessageHandler(MessageData* data)
 		}
 	}
 
+<<<<<<< HEAD
 
 	/* Visual notification of the Received message: LED blink. */
 	Led_Blue_Orange_Blink(40, 10, 4);
@@ -516,6 +514,8 @@ void allpurposeMessageHandler(MessageData* data)
 	/**
 	 * Cleanup
 	 */
+=======
+>>>>>>> 0e3bcac1b1c7f466643ccc49a344943778306564
 	cJSON_Delete(root);
 }
 
@@ -921,6 +921,7 @@ void genericmqtt_client_XCube_sample_run(void)
                             snprintf(mqtt_pubtopic, MQTT_TOPIC_BUFFER_SIZE, "/devices/%s/status", device_config->MQClientId);
 #endif
 
+<<<<<<< HEAD
                             /***
                             //!! The time(NULL) causes exception!!
                             ret = snprintf( mqtt_msg, MQTT_MSG_BUFFER_SIZE, "{\n \"state\": {\n  \"reported\": {\n"
@@ -958,6 +959,8 @@ void genericmqtt_client_XCube_sample_run(void)
                             	dval |= (int)digital_outputs[NUM_DIGITAL_OUTPUTS-i-1];
                             }
 
+=======
+>>>>>>> 0e3bcac1b1c7f466643ccc49a344943778306564
                             uint32_t ts = time(NULL); /* last_telemetry_time_ms; */
 
                             ret = snprintf(mqtt_msg, MQTT_MSG_BUFFER_SIZE, "{\n \"state\": {\n  \"reported\": {\n"
