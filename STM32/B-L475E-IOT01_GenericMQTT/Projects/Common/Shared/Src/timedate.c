@@ -71,7 +71,7 @@
 static const char http_request[] = "HEAD / HTTP/1.1\r\nHost: "TIME_SOURCE_HTTP_HOST"\r\n\r\n";
 
 /* Functions Definition ------------------------------------------------------*/
-
+extern void Clk_SetTime(uint16_t hour, uint16_t min, uint16_t sec, uint16_t GTM);
 /** 
  * @brief Set the RTC time and date from an HTTP response.
  * @param In:  force_apply     Force applying the time/date retrieved from the server, even if the server certificate verification failed.
@@ -178,6 +178,13 @@ int setRTCTimeDateFromNetwork(bool force_apply)
         }
         else
         {
+        	/**
+        	 *
+        	 *
+        	 */
+        	Clk_SetTime(hour, min, sec, 7);
+
+
           char * str = strstr(dateStr, "\r\n");
           str[0] = '\0';
           msg_info("Configuring the RTC from %s\n", dateStr);

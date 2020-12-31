@@ -141,7 +141,7 @@ static char mqtt_pubtopic[MQTT_TOPIC_BUFFER_SIZE];
 static char mqtt_msg[MQTT_MSG_BUFFER_SIZE];
 
 /* Private function prototypes -----------------------------------------------*/
-void genericmqtt_client_XCube_sample_run(void);
+void GenericMQTT_Client_Run(void);
 int stiot_publish(void* mqtt_ctxt, const char* topic, const char* msg);
 int32_t comp_left_ms(uint32_t init, uint32_t now, uint32_t timeout);
 int network_read(Network* n, unsigned char* buffer, int len, int timeout_ms);
@@ -154,6 +154,8 @@ int string_allocate_from_token(char** pDestString, char* tokenName, const char* 
 
 /* Exported functions --------------------------------------------------------*/
 
+
+
 int cloud_device_enter_credentials(void)
 {
     iot_config_t iot_config;
@@ -162,14 +164,9 @@ int cloud_device_enter_credentials(void)
     memset(&iot_config, 0, sizeof(iot_config_t));
 
     printf("\nEnter the connection string of your device:\n"
-#ifdef LITMUS_LOOP
-        "template for MQTT plain TCP connection:                                          HostName=xxx;HostPort=xxx;ConnSecurity=0;MQClientId=xxx;MQUserName=xxx;MQUserPwd=xxx;LoopTopicId=xxx;\n"
-        "template for MQTT TLS/SSL connection, without Litmus Loop server authentication: HostName=xxx;HostPort=xxx;ConnSecurity=1;MQClientId=xxx;MQUserName=xxx;MQUserPwd=xxx;LoopTopicId=xxx;\n"
-        "template for MQTT TLS/SSL connection, with Litmus Loop server authentication:    HostName=xxx;HostPort=xxx;ConnSecurity=2;MQClientId=xxx;MQUserName=xxx;MQUserPwd=xxx;LoopTopicId=xxx;\n");
-#else
         "template with MQTT authentication:    HostName=xxx;HostPort=xxx;ConnSecurity=x;MQClientId=xxx;MQUserName=xxx;MQUserPwd=xxx;\n"
         "template without MQTT authentication: HostName=xxx;HostPort=xxx;ConnSecurity=x;MQClientId=xxx;\n");
-#endif /* LITMUS_LOOP */
+
 
     getInputString(iot_config.device_name, USER_CONF_DEVICE_NAME_LENGTH);
     msg_info("read: --->\n%s\n<---\n", iot_config.device_name);
@@ -253,6 +250,107 @@ int network_write(Network* n, unsigned char* buffer, int len, int timeout_ms)
     return rc;
 }
 
+/**
+ * Digital Outputs
+ *   [0]: A0		PC5
+ *   [1]: A1		PC4
+ *   [2]: A2		PC3
+ *   [3]: A3		PC2
+ *   [4]: A4		PC1
+ *   [5]: A5		PC0
+ *   [6]: LED1		PA5
+ *   [7]: LED2		PB14
+ *   [8]: LED3		PC9		LED3&LED4 (Wi-Fi/Bluetooth)
+ */
+
+#define BIT_A0		0
+#define BIT_A1		1
+#define BIT_A2		2
+#define BIT_A3		3
+#define BIT_A4		4
+#define BIT_A5		5
+#define BIT_LED1	6
+#define BIT_LED2	7
+#define BIT_LED3	8
+
+#define NUM_DIGITAL_OUTPUTS	9
+static bool g_digital_outputs[NUM_DIGITAL_OUTPUTS] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+static void Update_Digital_Outputs(void) {
+
+	for(int i=0; i<=5; i++) {
+		HAL_GPIO_WritePin(GPIOC, (uint16_t)(1<<(5-i)), (int)g_digital_outputs[i]);	// A<5:0>
+	}
+
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,  (int)g_digital_outputs[6]);	// LED1
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, (int)g_digital_outputs[7]);	// LED2
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  (int)g_digital_outputs[8]);	// LED3/LED4
+
+	status_data.LedOn = g_digital_outputs[BIT_LED2];
+}
+
+void Digital_Output_Set(int16_t BitId, bool BitData) {
+
+	if( BitId>=0 && BitId<=5 ) {
+		g_digital_outputs[BitId] = BitData;
+		g_statusChanged = true;
+		//HAL_GPIO_WritePin(GPIOC, (uint16_t)(1<<(5-BitId)), (int)g_digital_outputs[BitId]);	// A<5:0>
+	}
+	else if( BitId == BIT_LED1 ) {
+		g_digital_outputs[BIT_LED1] = BitData;
+		g_statusChanged = true;
+		//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,  (int)g_digital_outputs[BIT_LED1]);	// LED1
+	}
+	else if( BitId == BIT_LED2 ) {
+		g_digital_outputs[BIT_LED2] = BitData;
+		g_statusChanged = true;
+		//HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, (int)g_digital_outputs[BIT_LED2]);	// LED2
+	}
+	else if( BitId == BIT_LED3 ) {
+		g_digital_outputs[BIT_LED3] = BitData;
+		g_statusChanged = true;
+		//HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  (int)g_digital_outputs[BIT_LED3]);	// LED3/LED4
+	}
+
+	if(g_statusChanged == true) {
+		Update_Digital_Outputs();
+	}
+}
+
+
+
+void Led_Blue_Orange_Blink(int period, int duty, int count)
+{
+    if ((duty > 0) && (period >= duty))
+    {
+        /*  Shape:   ____
+                      on |_off__ */
+        do
+        {
+        	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  GPIO_PIN_SET); 	// LED3/LED4
+            HAL_Delay(duty);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  GPIO_PIN_RESET); // LED3/LED4
+            HAL_Delay(period - duty);
+        } while (count--);
+    }
+    if ((duty < 0) && (period >= -duty))
+    {
+        /*  Shape:         ____
+                    __off_| on   */
+        do
+        {
+        	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  GPIO_PIN_RESET); // LED3/LED4
+            HAL_Delay(period + duty);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  GPIO_PIN_SET); 	// LED3/LED4
+            HAL_Delay(-duty);
+        } while (count--);
+    }
+
+    // Restore
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9,  (int)g_digital_outputs[BIT_LED3]);	// LED3/LED4
+}
+
+
 /** Message callback
  *
  *  Note: No context handle is passed by the callback. Must rely on static variables.
@@ -269,9 +367,119 @@ void allpurposeMessageHandler(MessageData* data)
 
 
 
+
+	/**
+	 * JSON
+	 */
 	cJSON *json = NULL;
 	cJSON *root = cJSON_Parse(mqtt_msg);
 
+
+
+
+	for(int i=0; i<3; i++) {
+			char key[64];
+			sprintf(key, "Led%d", i+1);
+			json = cJSON_GetObjectItemCaseSensitive(root, key);
+			if(json != NULL) {
+				if (cJSON_IsBool(json) == true) {
+					g_digital_outputs[i+6] = (cJSON_IsTrue(json) == true);
+					Update_Digital_Outputs();
+					g_statusChanged = true;
+					break;
+				}
+				else if( (cJSON_IsString(json) == true) ) {
+					if( (strcmp(json->valuestring, "toggle") == 0) || (strcmp(json->valuestring, "inv") == 0)) {
+						g_digital_outputs[i+6] = !g_digital_outputs[i+6];
+						Update_Digital_Outputs();
+						g_statusChanged = true;
+						break;
+					}
+					else if( (strcmp(json->valuestring, "set") == 0) ) {
+						g_digital_outputs[i+6] = true;
+						Update_Digital_Outputs();
+						g_statusChanged = true;
+						break;
+					}
+					else if( (strcmp(json->valuestring, "reset") == 0) || (strcmp(json->valuestring, "clear") == 0) || (strcmp(json->valuestring, "clr") == 0)) {
+						g_digital_outputs[i+6] = false;
+						Update_Digital_Outputs();
+						g_statusChanged = true;
+						break;
+					}
+				}
+				else {
+					msg_error("JSON parsing error of Led value.\n");
+				}
+			}
+		}
+
+
+	/**
+	 * DigitalOutput<5:NUM_DIGITAL_OUTPUTS-1>
+	 */
+
+	for(int i=0; i<NUM_DIGITAL_OUTPUTS; i++) {
+		char key[64];
+		sprintf(key, "DigitalOutput%d", i);
+		json = cJSON_GetObjectItemCaseSensitive(root, key);
+		if(json != NULL) {
+			if (cJSON_IsBool(json) == true) {
+				g_digital_outputs[i] = (cJSON_IsTrue(json) == true);
+				Update_Digital_Outputs();
+				g_statusChanged = true;
+				break;
+			}
+			else if( (cJSON_IsString(json) == true)  ) {
+				if( (strcmp(json->valuestring, "toggle") == 0 ) || (strcmp(json->valuestring, "inv") == 0 )) {
+					g_digital_outputs[i] = !g_digital_outputs[i];
+					Update_Digital_Outputs();
+					g_statusChanged = true;
+					break;
+				}
+				else if( (strcmp(json->valuestring, "set") == 0 ) ) {
+					g_digital_outputs[i] = true;
+					Update_Digital_Outputs();
+					g_statusChanged = true;
+					break;
+				}
+				else if( (strcmp(json->valuestring, "reset") == 0 ) || (strcmp(json->valuestring, "clear") == 0 ) || (strcmp(json->valuestring, "clr") == 0 )) {
+					g_digital_outputs[i] = false;
+					Update_Digital_Outputs();
+					g_statusChanged = true;
+					break;
+				}
+			}
+			else {
+				msg_error("JSON parsing error of DigitalOutputX value.\n");
+			}
+		}
+	}
+
+	json = cJSON_GetObjectItemCaseSensitive(root, "DigitalWrite");
+	int d = 0;
+	if (json != NULL) {
+		if (cJSON_IsNumber(json) == true) {
+
+			d = json->valueint;
+			for(int j=0; j<NUM_DIGITAL_OUTPUTS; j++) {
+				g_digital_outputs[j] = ((d&1) > 0);
+				d>>=1;
+				printf("DigitalOutput[%d]: %s\n", j, ((g_digital_outputs[j] == true) ? "true" : "false") );
+			}
+			Update_Digital_Outputs();
+			g_statusChanged = true;
+		}
+		else {
+			msg_error("JSON parsing error of DigitalWrite value.\n");
+		}
+	}
+
+
+	/**
+	 * Key: TelemetryInterval
+	 * Val: int
+	 */
 	json = cJSON_GetObjectItemCaseSensitive(root, "TelemetryInterval");
 	if (json != NULL) {
 		if (cJSON_IsNumber(json) == true)  {
@@ -283,6 +491,11 @@ void allpurposeMessageHandler(MessageData* data)
 		}
 	}
 
+
+	/**
+	 * Key: Reboot
+	 * Val: true
+	 */
 	json = cJSON_GetObjectItemCaseSensitive(root, "Reboot");
 	if (json != NULL) {
 		if (cJSON_IsBool(json) == true) {
@@ -293,15 +506,96 @@ void allpurposeMessageHandler(MessageData* data)
 		}
 	}
 
+
+	/* Visual notification of the Received message: LED blink. */
+	Led_Blue_Orange_Blink(40, 10, 4);
+
+	/**
+	 * Cleanup
+	 */
 	cJSON_Delete(root);
+}
+
+#define MQTT_ACTUATORS_TOPIC 	"/actuators"
+#define MQTT_SENSORS_TOPIC 		"/sensors"
+
+static int __helper_create_sensors_data(device_config_t* device_config) {
+
+	/* Read the Data from the sensors */
+	pub_data.temperature = BSP_TSENSOR_ReadTemp();
+	pub_data.humidity 	 = BSP_HSENSOR_ReadHumidity();
+	pub_data.pressure 	 = BSP_PSENSOR_ReadPressure();
+	pub_data.proximity 	 = VL53L0X_PROXIMITY_GetDistance();
+	BSP_ACCELERO_AccGetXYZ(pub_data.ACC_Value);
+	BSP_GYRO_GetXYZ(pub_data.GYR_Value);
+	BSP_MAGNETO_GetXYZ(pub_data.MAG_Value);
+	pub_data.ts = time(NULL);
+
+	snprintf(mqtt_pubtopic, MQTT_TOPIC_BUFFER_SIZE, "%s/%s", MQTT_SENSORS_TOPIC, device_config->MQClientId);
+
+	return snprintf(mqtt_msg, MQTT_MSG_BUFFER_SIZE, "{\n \"state\": {\n  \"reported\": {\n"
+						"   \"temperature\": %.2f,\n   \"humidity\": %.2f,\n   \"pressure\": %.2f,\n   \"proximity\": %ld,\n"
+						"   \"acc_x\": %d, \"acc_y\": %d, \"acc_z\": %d,\n"
+						"   \"gyr_x\": %.0f, \"gyr_y\": %.0f, \"gyr_z\": %.0f,\n"
+						"   \"mag_x\": %d, \"mag_y\": %d, \"mag_z\": %d,\n"
+						"   \"ts\": %lu, \"mac\": \"%s\", \"devId\": \"%s\"\n"
+						"  }\n }\n}",
+						pub_data.temperature, pub_data.humidity, pub_data.pressure, pub_data.proximity,
+						pub_data.ACC_Value[0], pub_data.ACC_Value[1], pub_data.ACC_Value[2],
+						pub_data.GYR_Value[0], pub_data.GYR_Value[1], pub_data.GYR_Value[2],
+						pub_data.MAG_Value[0], pub_data.MAG_Value[1], pub_data.MAG_Value[2],
+						pub_data.ts, pub_data.mac, device_config->MQClientId);
+}
+
+
+static int __helper_create_actuators_data(device_config_t* device_config) {
+
+    /**
+     * Bits to binary (string format)
+     */
+    char bits[32];
+    for(int i=0; i<NUM_DIGITAL_OUTPUTS; i++) {
+    	bits[NUM_DIGITAL_OUTPUTS-i-1] = (g_digital_outputs[i] == true) ? '1' : '0';
+    }
+    bits[NUM_DIGITAL_OUTPUTS] = 0;
+
+
+    /**
+     * Bits to Integer
+     */
+    int  value = 0;
+    for(int i=0; i<NUM_DIGITAL_OUTPUTS; i++) {
+    	value<<=1;
+    	value |= (int)g_digital_outputs[NUM_DIGITAL_OUTPUTS-i-1];
+    }
+
+    uint32_t ts = time(NULL);
+
+    snprintf(mqtt_pubtopic, MQTT_TOPIC_BUFFER_SIZE, "%s/%s/status", MQTT_ACTUATORS_TOPIC, device_config->MQClientId);
+
+    return snprintf(mqtt_msg, MQTT_MSG_BUFFER_SIZE, "{\n \"state\": {\n  \"reported\": {\n"
+						"   \"DigitalOutputs\": \"%s %d 0x%.3X\",\n"
+						"   \"TelemetryInterval\": %d,\n"
+						"   \"ts\": %ld, \"mac\": \"%s\", \"devId\": \"%s\"\n"
+						"  }\n }\n}",
+						bits, value, value,
+						(int)status_data.TelemetryInterval,
+						ts,
+						pub_data.mac,
+						device_config->MQClientId);
 }
 
 
 
+static uint16_t loop_counter_50ms = 0;
+
+#define MQTT_YIELD_MS	50
 
 /** Main loop */
-void genericmqtt_client_XCube_sample_run(void)
+void GenericMQTT_Client_Run(void)
 {
+
+
     int ret = 0;
     bool b_mqtt_connected = false;
     const char* connectionString = NULL;
@@ -466,25 +760,19 @@ void genericmqtt_client_XCube_sample_run(void)
                 else {
 
                 	/**
-					 * Connected
+					 * MQTT Connected
 					 */
                     g_connection_needed_score = 0;
                     b_mqtt_connected = true;
 
-#ifdef LITMUS_LOOP
-                    snprintf(mqtt_subtopic, MQTT_TOPIC_BUFFER_SIZE, "loop/req/%s/json", device_config->LoopTopicId);
-#elif defined(UBIDOTS_MQTT)
-                    snprintf(mqtt_subtopic, MQTT_TOPIC_BUFFER_SIZE, "/v1.6/devices/%s/ts/lv", device_config->MQClientId); /* Subscribe the timestamp latest value */
-#else
-                    snprintf(mqtt_subtopic, MQTT_TOPIC_BUFFER_SIZE, "/devices/%s/control", device_config->MQClientId);
-#endif /* LITMUS_LOOP */
+                    snprintf(mqtt_subtopic, MQTT_TOPIC_BUFFER_SIZE, "%s/%s/control", MQTT_ACTUATORS_TOPIC, device_config->MQClientId);
                     ret = MQTTSubscribe(&client, mqtt_subtopic, QOS0, (allpurposeMessageHandler));
 
 
                     /**
                      * MQTT_UserCallback -------------------------------------------------------------------------------------------
                      */
-                    mqtt_connected_to_server(&client);
+                    //CALLBACK ==> mqtt_connected_to_server(&client);
                 }
 
                 /* ret = MQTTSetMessageHandler(&client, "#", (allpurposeMessageHandler)); */
@@ -494,182 +782,64 @@ void genericmqtt_client_XCube_sample_run(void)
                 }
                 else {
                     msg_info("Subscribed to %s.\n", mqtt_subtopic);
-                    ret = MQTTYield(&client, 500);
+                    ret = MQTTYield(&client, MQTT_YIELD_MS);//ret = MQTTYield(&client, 500);
                 }
                 if (ret != MQSUCCESS) {
                     msg_error("Yield failed.\n");
                 }
                 else {
 
-#ifdef LITMUS_LOOP
-                    /* Device information data update */
-                    ret = snprintf(mqtt_pubtopic, sizeof(mqtt_pubtopic), "loop/data/%s/json", device_config->LoopTopicId);
 
-                    if (ret >= 0 && ret < sizeof(mqtt_pubtopic))
-                    {
-                        /* Updates of Manufacturer, Model Number, Serial Number, Firmware Version */
-                        ret = snprintf(mqtt_msg, sizeof(mqtt_msg), "{ \"timestamp\":0, \"values\": [ \n"
-                            "{\"objectId\":3,\"instanceId\":0,\"resourceId\":0,\"datatype\":\"String\",\"value\":\"STMicroelectronics\"}, \n"
-                            "{\"objectId\":3,\"instanceId\":0,\"resourceId\":1,\"datatype\":\"String\",\"value\":\"Model 1.0\"}, \n"
-                            "{\"objectId\":3,\"instanceId\":0,\"resourceId\":2,\"datatype\":\"String\",\"value\":\"Serial 1\"}, \n"
-                            "{\"objectId\":3,\"instanceId\":0,\"resourceId\":3,\"datatype\":\"String\",\"value\":\"Firmware 1.0\"} \n"
-                            "] }");
-
-                        if (ret >= 0 && ret < sizeof(mqtt_msg))
-                        {
-                            ret = stiot_publish(&client, mqtt_pubtopic, mqtt_msg);  /* Wrapper for MQTTPublish() */
-
-                            if (ret == MQSUCCESS)
-                            {
-                                msg_info("publication topic: %s \tpayload: %s\n", mqtt_pubtopic, mqtt_msg);
-                            }
-                            else
-                            {
-                                msg_error("Device information publication failed.\n");
-                                g_connection_needed_score++;
-                            }
-
-                        }
-                        else
-                        {
-                            msg_error("Error formatting device information message.\n");
-                        }
-                    }
-                    else
-                    {
-                        msg_error("Error formatting device information topic.\n");
-                    }
-#endif /* LITMUS_LOOP */
-
-
-                    /**
+                	/***************************************************************************************************
                      * Send the telemetry data, and send the device status if it was changed by a received message.
-                     */
+                     ***************************************************************************************************/
+
                     uint32_t last_telemetry_time_ms = HAL_GetTick();
+
+
                     do {
 
                         uint8_t command = Button_WaitForMultiPush(500);
 
-                        bool b_sample_data = (command == BP_SINGLE_PUSH); 	/* If short button push, publish once. */
+                        bool b_sample_data = (command == BP_SINGLE_PUSH); 	// If short button push, publish once.
 
-                        if (command == BP_MULTIPLE_PUSH){              		/* If long button push, toggle the telemetry publication. */
+                        if (command == BP_MULTIPLE_PUSH) {              	// If long button push, toggle the telemetry publication.
 
                             g_publishData = !g_publishData;
-                            msg_info("%s the sensor values publication loop.\n", (g_publishData == true) ? "Enter" : "Exit");
+                            msg_info("\n%s the sensor values publication loop.\n", (g_publishData == true) ? "Enter" : "Exit");
                         }
+
 
                         int32_t left_ms = comp_left_ms(last_telemetry_time_ms, HAL_GetTick(), status_data.TelemetryInterval * 1000);
 
-                        if (((g_publishData == true) && (left_ms <= 0)) || (b_sample_data == true))
-                        {
+
+                        /***************************************************************************************************
+                         * [1] Publish sensors data (activated by the BLUE button)
+                         ***************************************************************************************************/
+
+                        if (((g_publishData == true) && (left_ms <= 0)) || (b_sample_data == true)) {
+
                             last_telemetry_time_ms = HAL_GetTick();
 
-#ifdef SENSOR
-                            /* Read the Data from the sensors */
-                            pub_data.temperature = BSP_TSENSOR_ReadTemp();
-                            pub_data.humidity = BSP_HSENSOR_ReadHumidity();
-                            pub_data.pressure = BSP_PSENSOR_ReadPressure();
-                            pub_data.proximity = VL53L0X_PROXIMITY_GetDistance();
-                            BSP_ACCELERO_AccGetXYZ(pub_data.ACC_Value);
-                            BSP_GYRO_GetXYZ(pub_data.GYR_Value);
-                            BSP_MAGNETO_GetXYZ(pub_data.MAG_Value);
-#endif /* SENSOR */
-                            pub_data.ts = time(NULL); /* last_telemetry_time_ms; */
+                            /**
+                             * [1.1] Prepare sensor data for publishing
+                             */
+                            ret = __helper_create_sensors_data(device_config);
 
-                            /* Create and send the message. */
-                            /* Note: The state.reported object hierarchy is used to help the inter-operability with 1st tier cloud providers. */
-#ifdef LITMUS_LOOP
-                            ret = snprintf(mqtt_pubtopic, sizeof(mqtt_pubtopic), "loop/data/%s/json", device_config->LoopTopicId);
-                            if (ret >= 0 && ret < sizeof(mqtt_pubtopic))
-                            {
-                                ret = snprintf(mqtt_msg, sizeof(mqtt_msg), "{ \"timestamp\":0, \"values\": [ \n"
-#ifdef SENSOR
-                                    "{\"objectId\":3303,\"instanceId\":0,\"resourceId\":5700,\"datatype\":\"Float\",\"value\":%.2f}, \n"
-                                    "{\"objectId\":3304,\"instanceId\":0,\"resourceId\":5700,\"datatype\":\"Float\",\"value\":%.2f}, \n"
-                                    "{\"objectId\":3323,\"instanceId\":0,\"resourceId\":5700,\"datatype\":\"Float\",\"value\":%.2f}, \n"
-                                    "{\"objectId\":3330,\"instanceId\":0,\"resourceId\":5700,\"datatype\":\"Integer\",\"value\":%ld}, \n"
-                                    "{\"objectId\":3313,\"instanceId\":0,\"resourceId\":5702,\"datatype\":\"Integer\",\"value\":%d}, \n"
-                                    "{\"objectId\":3313,\"instanceId\":0,\"resourceId\":5703,\"datatype\":\"Integer\",\"value\":%d}, \n"
-                                    "{\"objectId\":3313,\"instanceId\":0,\"resourceId\":5704,\"datatype\":\"Integer\",\"value\":%d}, \n"
-                                    "{\"objectId\":3334,\"instanceId\":0,\"resourceId\":5702,\"datatype\":\"Integer\",\"value\":%.0f}, \n"
-                                    "{\"objectId\":3334,\"instanceId\":0,\"resourceId\":5703,\"datatype\":\"Integer\",\"value\":%.0f}, \n"
-                                    "{\"objectId\":3334,\"instanceId\":0,\"resourceId\":5704,\"datatype\":\"Integer\",\"value\":%.0f}, \n"
-                                    "{\"objectId\":3314,\"instanceId\":0,\"resourceId\":5702,\"datatype\":\"Integer\",\"value\":%d}, \n"
-                                    "{\"objectId\":3314,\"instanceId\":0,\"resourceId\":5703,\"datatype\":\"Integer\",\"value\":%d}, \n"
-                                    "{\"objectId\":3314,\"instanceId\":0,\"resourceId\":5704,\"datatype\":\"Integer\",\"value\":%d}, \n"
-#endif /* SENSOR */
-                                    "{\"objectId\":3333,\"instanceId\":0,\"resourceId\":5506,\"datatype\":\"Integer\",\"value\":%lu} \n"
-                                    "] }",
-#ifdef SENSOR
-                                    pub_data.temperature, pub_data.humidity, pub_data.pressure, pub_data.proximity,
-                                    pub_data.ACC_Value[0], pub_data.ACC_Value[1], pub_data.ACC_Value[2],
-                                    pub_data.GYR_Value[0], pub_data.GYR_Value[1], pub_data.GYR_Value[2],
-                                    pub_data.MAG_Value[0], pub_data.MAG_Value[1], pub_data.MAG_Value[2],
-#endif /* SENSOR */
-                                    pub_data.ts
-                                );
-
-                            }
-                            else
-                            {
-                                msg_error("Error formatting device data topic.\n");
-                            }
-#elif defined(UBIDOTS_MQTT)
-                            snprintf(mqtt_pubtopic, MQTT_TOPIC_BUFFER_SIZE, "/v1.6/devices/%s", device_config->MQClientId);
-                            ret = snprintf(mqtt_msg, MQTT_MSG_BUFFER_SIZE, "{\n"
-#ifdef SENSOR
-                                "   \"temperature\": %.2f,\n   \"humidity\": %.2f,\n   \"pressure\": %.2f,\n   \"proximity\": %ld,\n"
-                                "   \"acc_x\": %d, \"acc_y\": %d, \"acc_z\": %d,\n"
-                                "   \"gyr_x\": %.0f, \"gyr_y\": %.0f, \"gyr_z\": %.0f,\n"
-                                "   \"mag_x\": %d, \"mag_y\": %d, \"mag_z\": %d,\n"
-#endif /* SENSOR */
-                                "   \"ts\":  %lu\n"
-                                "}"
-#ifdef SENSOR
-                                , pub_data.temperature, pub_data.humidity, pub_data.pressure, pub_data.proximity
-                                , pub_data.ACC_Value[0], pub_data.ACC_Value[1], pub_data.ACC_Value[2]
-                                , pub_data.GYR_Value[0], pub_data.GYR_Value[1], pub_data.GYR_Value[2]
-                                , pub_data.MAG_Value[0], pub_data.MAG_Value[1], pub_data.MAG_Value[2]
-#endif  /* SENSOR */
-                                , pub_data.ts
-                            );
-
-#else /* ! LITMUS_LOOP */
-                            snprintf(mqtt_pubtopic, MQTT_TOPIC_BUFFER_SIZE, "/sensors/%s", device_config->MQClientId);
-                            ret = snprintf(mqtt_msg, MQTT_MSG_BUFFER_SIZE, "{\n \"state\": {\n  \"reported\": {\n"
-
-#ifdef SENSOR
-                                "   \"temperature\": %.2f,\n   \"humidity\": %.2f,\n   \"pressure\": %.2f,\n   \"proximity\": %ld,\n"
-                                "   \"acc_x\": %d, \"acc_y\": %d, \"acc_z\": %d,\n"
-                                "   \"gyr_x\": %.0f, \"gyr_y\": %.0f, \"gyr_z\": %.0f,\n"
-                                "   \"mag_x\": %d, \"mag_y\": %d, \"mag_z\": %d,\n"
-#endif /* SENSOR */
-                                "   \"ts\": %lu, \"mac\": \"%s\", \"devId\": \"%s\"\n"
-                                "  }\n }\n}",
-
-#ifdef SENSOR
-                                pub_data.temperature, pub_data.humidity, pub_data.pressure, pub_data.proximity,
-                                pub_data.ACC_Value[0], pub_data.ACC_Value[1], pub_data.ACC_Value[2],
-                                pub_data.GYR_Value[0], pub_data.GYR_Value[1], pub_data.GYR_Value[2],
-                                pub_data.MAG_Value[0], pub_data.MAG_Value[1], pub_data.MAG_Value[2],
-#endif /* SENSOR */
-                                pub_data.ts, pub_data.mac, device_config->MQClientId);
-
-#endif /* LITMUS_LOOP */
 
                             if ((ret < 0) || (ret >= MQTT_MSG_BUFFER_SIZE)) {
                                 msg_error("Telemetry message formatting error.\n");
                             }
                             else {
 
-                            	/**
-                            	 * MQTTPublish()
-                            	 */
+                            	/********************************************************************************************
+                            	 * [1.2] Publish sensors data (activated by the BLUE switch)
+                            	 ********************************************************************************************/
                                 ret = stiot_publish(&client, mqtt_pubtopic, mqtt_msg);
                                 if (ret == MQSUCCESS)  {
 
                                     /* Visual notification of the telemetry publication: LED blink. */
-                                	Led_Blink(50, 25, 5);
+                                	Led_Blue_Orange_Blink(50, 25, 5);
 
                                     msg_info("#\n");
                                     msg_info("publication topic: %s \npayload: %s\n", mqtt_pubtopic, mqtt_msg);
@@ -679,69 +849,83 @@ void genericmqtt_client_XCube_sample_run(void)
                                     g_connection_needed_score++;
                                 }
 
-                                ret = MQTTYield(&client, 500);
+                                ret = MQTTYield(&client, MQTT_YIELD_MS);//ret = MQTTYield(&client, 500);
                                 if (ret != MQSUCCESS)  {
                                     msg_error("Yield failed. Reconnection needed?.\n");
                                     /* g_connection_needed_score++; */
                                 }
                             }
-                        }
+                        }// Publish Sensors data
 
-#ifndef UBIDOTS_MQTT
-                        /* Publish the updated device status */
-                        if (g_statusChanged)
-                        {
-#ifdef LITMUS_LOOP
-                            snprintf(mqtt_pubtopic, MQTT_TOPIC_BUFFER_SIZE, "loop/resp/%s/json", device_config->LoopTopicId);
-#else
-                            snprintf(mqtt_pubtopic, MQTT_TOPIC_BUFFER_SIZE, "/devices/%s/status", device_config->MQClientId);
-#endif
 
-                            uint32_t ts = time(NULL); /* last_telemetry_time_ms; */
 
-                            ret = snprintf(mqtt_msg, MQTT_MSG_BUFFER_SIZE, "{\n \"state\": {\n  \"reported\": {\n"
-                                "   \"TelemetryInterval\": %d,\n"
-                                "   \"ts\": %ld, \"mac\": \"%s\", \"devId\": \"%s\"\n"
-                                "  }\n }\n}",
-                                (int)status_data.TelemetryInterval,
-                                ts,
-                                pub_data.mac,
-                                device_config->MQClientId);
+                        /***************************************************************************************************
+                         * [2] Publish the updated device status (activated when a controlled command is received)
+                         ***************************************************************************************************/
+
+                        if (g_statusChanged) {
+
+                        	/**
+							 * [2.1] Prepare actuators data for publishing
+							 */
+                            ret = __helper_create_actuators_data(device_config);
 
 
                             if ((ret < 0) || (ret >= MQTT_MSG_BUFFER_SIZE)) {
                                 msg_error("Telemetry message formatting error.\n");
                             }
                             else {
-                            	/**
-                            	 *   MQTTPublish()
-                            	 */
+                            	/********************************************************************************************
+								 * [2.2] Publish actuators data
+								 ********************************************************************************************/
                                 ret = stiot_publish(&client, mqtt_pubtopic, mqtt_msg);
                                 if (ret != MQSUCCESS)  {
                                     msg_error("Status publication failed.\n");
                                     g_connection_needed_score++;
                                 }
                                 else {
+                                	msg_info("#\n");
                                     msg_info("publication topic: %s \npayload: %s\n", mqtt_pubtopic, mqtt_msg);
                                     g_statusChanged = false;
                                 }
                             }
                         }
-#else /* ! UBIDOTS_MQTT */
-                        (void)g_statusChanged;
-#endif /* ! UBIDOTS_MQTT */
 
-                        ret = MQTTYield(&client, 500);
+
+                        /***************************************************************************************************
+						 * [3] Publish others if requird
+						 ***************************************************************************************************/
+                        if(0) {
+
+                        }
+
+
+
+
+
+
+                        ret = MQTTYield(&client, MQTT_YIELD_MS);
                         if (ret != MQSUCCESS) {
                             msg_error("Yield failed. Reconnection needed.\n");
                             g_connection_needed_score++;
                         }
                         else {
-                            msg_info(".");
+                        	if(++loop_counter_50ms >= 10) {
+								msg_info(".");
+								loop_counter_50ms = 0;
+							}
                         }
-                    } while (g_continueRunning && !g_reboot && (g_connection_needed_score == 0));
 
-                }
+
+
+
+
+                    } while (g_continueRunning && !g_reboot && (g_connection_needed_score == 0));
+                    // END of internal do{}while()
+
+                } // END of external do{}while()
+
+
 
 
                 /* The publication loop is exited.
@@ -841,18 +1025,14 @@ int parse_and_fill_device_config(device_config_t** pConfig, const char* string)
     int ret = -1;
     device_config_t* config = NULL;
 
-    if (strlen(string) > USER_CONF_DEVICE_NAME_LENGTH)
-    {
+    if (strlen(string) > USER_CONF_DEVICE_NAME_LENGTH) {
         msg_error("Cannot parse the configuration string:  It is not null-terminated!\n");
     }
-    else
-    {
-        if (pConfig == NULL)
-        {
+    else {
+        if (pConfig == NULL) {
             msg_error("Null parameter\n");
         }
-        else
-        {
+        else  {
             config = malloc(sizeof(device_config_t));
             memset(config, 0, sizeof(device_config_t));
 
@@ -862,17 +1042,12 @@ int parse_and_fill_device_config(device_config_t** pConfig, const char* string)
             ret |= string_allocate_from_token(&config->MQClientId, "MQClientId=", string);
             ret |= string_allocate_from_token(&config->MQUserName, "MQUserName=", string);
             ret |= string_allocate_from_token(&config->MQUserPwd, "MQUserPwd=", string);
-#ifdef LITMUS_LOOP
-            ret |= string_allocate_from_token(&config->LoopTopicId, "LoopTopicId=", string);
-#endif
 
-            if (ret != 0)
-            {
+            if (ret != 0)  {
                 msg_error("Failed parsing the device configuration string.\n");
                 free_device_config(config);
             }
-            else
-            {
+            else {
                 *pConfig = config;
                 ret = 0;
             }
@@ -887,22 +1062,17 @@ int parse_and_fill_device_config(device_config_t** pConfig, const char* string)
  */
 void free_device_config(device_config_t* config)
 {
-    if (config != NULL)
-    {
+    if (config != NULL) {
         if (config->HostName != NULL) free(config->HostName);
         if (config->HostPort != NULL) free(config->HostPort);
         if (config->ConnSecurity != NULL) free(config->ConnSecurity);
         if (config->MQClientId != NULL) free(config->MQClientId);
         if (config->MQUserName != NULL) free(config->MQUserName);
         if (config->MQUserPwd != NULL) free(config->MQUserPwd);
-#ifdef LITMUS_LOOP
-        if (config->LoopTopicId != NULL) free(config->LoopTopicId);
-#endif
 
         free(config);
     }
-    else
-    {
+    else {
         msg_warning("Attemped to free a non-allocated config structure.\n");
     }
 }
@@ -921,9 +1091,9 @@ int32_t comp_left_ms(uint32_t init, uint32_t now, uint32_t timeout)
     int32_t ret = 0;
     uint32_t wrap_end = 0;
 
-    if (now < init)
-    { /* Timer wrap-around detected */
-      /* printf("Timer: wrap-around detected from %d to %d\n", init, now); */
+    if (now < init) {
+    	/* Timer wrap-around detected */
+    	/* printf("Timer: wrap-around detected from %d to %d\n", init, now); */
         wrap_end = UINT32_MAX - init;
     }
     ret = wrap_end - (now - init) + timeout;

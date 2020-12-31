@@ -170,7 +170,7 @@ int platform_init(void)
 {
   net_ipaddr_t ipAddr;
   net_macaddr_t macAddr;
-  const firmware_version_t  *fw_version=&version;;
+  // const firmware_version_t  *fw_version=&version;;
   unsigned int random_number = 0;
   bool skip_reconf = false;
   
@@ -184,41 +184,13 @@ int platform_init(void)
     srand(random_number);
   }
 
-//  printf("\n");
-//  printf("*************************************************************\n");
-//  printf("***   STM32 IoT Discovery kit for                         \n");
-//  printf("***      STM32F413/STM32F769/STM32L475/STM32L496 MCU      \n");
-//  printf("***   %s Cloud Connectivity Demonstration                 \n",fw_version->name);
-//  printf("***   FW version %d.%d.%d - %s      \n",
-//           fw_version->major, fw_version->minor, fw_version->patch, fw_version->packaged_date);
-//  printf("*************************************************************\n");
+//    printf("\n\n");
+//    printf("*************************************************************\n");
+//    printf("***                TESA TOPGUN RALLY 2021                 ***\n");
+//    printf("***                   TGR MQTT Client                     ***\n");
+//    printf("*************************************************************\n\n");
 
-    printf("\n\n");
-    printf("*************************************************************\n");
-    printf("***                TESA TOPGUN RALLY 2021                 ***\n");
-    printf("***                 IoT Application Demo                  ***\n");
-    printf("*************************************************************\n\n");
-
-  
-
-
-
-
-  printf("\n*** Board Initialization ***\n");
-
-
-#ifdef SENSOR
-    printf("\n*** Sensors Initialization ***\n");
-	int res = init_sensors();
-	if(0 != res)
-	{
-		msg_error("init_sensors returned error : %d\n", res);
-	}
-	else {
-		sensors_initialized(NULL);
-	}
-#endif /* SENSOR */
-
+    //printf("\n*** Board Initialization ***\n");
 
   /* Network initialization */
   if (net_init(&hnet, NET_IF, (net_if_init)) != NET_OK)
@@ -259,7 +231,7 @@ int platform_init(void)
     {
       case NET_IP_V4:
         msg_info("IP address: %d.%d.%d.%d\n", ipAddr.ip[12], ipAddr.ip[13], ipAddr.ip[14], ipAddr.ip[15]);
-        iot_got_ip_address(NULL);
+        //CALLBACK: ==> iot_got_ip_address(NULL);
         break;
       case NET_IP_V6:
       default:

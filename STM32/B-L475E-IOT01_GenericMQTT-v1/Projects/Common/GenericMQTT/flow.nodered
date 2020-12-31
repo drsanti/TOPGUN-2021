@@ -1,0 +1,924 @@
+[
+    {
+        "id": "bf3b3f87.f9aa",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false
+    },
+    {
+        "id": "dfbfaa4.fa85e58",
+        "type": "mqtt in",
+        "z": "bf3b3f87.f9aa",
+        "name": "monitor sensors",
+        "topic": "/sensors/#",
+        "qos": "1",
+        "broker": "d0cd0cad.79ccf",
+        "x": 181,
+        "y": 260,
+        "wires": [
+            [
+                "993b8507.c476a",
+                "5a495971.3ee138"
+            ]
+        ]
+    },
+    {
+        "id": "5a495971.3ee138",
+        "type": "debug",
+        "z": "bf3b3f87.f9aa",
+        "name": "stdout",
+        "active": false,
+        "console": "true",
+        "complete": "payload",
+        "x": 380,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "9f58c012.316e5",
+        "type": "ui_gauge",
+        "z": "bf3b3f87.f9aa",
+        "name": "Temperature",
+        "group": "48023693.416478",
+        "order": 1,
+        "width": "3",
+        "height": "3",
+        "gtype": "gage",
+        "title": "Temperature",
+        "label": "",
+        "format": "{{value|number:1}}°C",
+        "min": "15",
+        "max": "50",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "25",
+        "seg2": "35",
+        "x": 870,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "6edee329.dde17c",
+        "type": "function",
+        "z": "bf3b3f87.f9aa",
+        "name": "Temperature filter",
+        "func": "msg.payload = msg.payload.state.reported.temperature;\nmsg.topic = \"temperature\";\n\nreturn msg;",
+        "outputs": "1",
+        "noerr": 0,
+        "x": 610,
+        "y": 320,
+        "wires": [
+            [
+                "9f58c012.316e5",
+                "b19b797f.2d4dc8"
+            ]
+        ]
+    },
+    {
+        "id": "14308aec.6a3fc5",
+        "type": "ui_gauge",
+        "z": "bf3b3f87.f9aa",
+        "name": "Humidity",
+        "group": "48023693.416478",
+        "order": 2,
+        "width": "3",
+        "height": "3",
+        "gtype": "gage",
+        "title": "Humidity",
+        "label": "RH",
+        "format": "{{value|number:1}}%",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "60",
+        "seg2": "80",
+        "x": 860,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "d9c3ab80.7d8148",
+        "type": "function",
+        "z": "bf3b3f87.f9aa",
+        "name": "Humidity filter",
+        "func": "msg.payload = msg.payload.state.reported.humidity;\nmsg.topic = \"humidity\";\n\nreturn msg;",
+        "outputs": "1",
+        "noerr": 0,
+        "x": 601.8355407714844,
+        "y": 415.48382568359375,
+        "wires": [
+            [
+                "14308aec.6a3fc5",
+                "b19b797f.2d4dc8"
+            ]
+        ]
+    },
+    {
+        "id": "e2e012b5.85701",
+        "type": "function",
+        "z": "bf3b3f87.f9aa",
+        "name": "Pressure filter",
+        "func": "msg.payload = msg.payload.state.reported.pressure;\n\nreturn msg;",
+        "outputs": "1",
+        "noerr": 0,
+        "x": 600,
+        "y": 460,
+        "wires": [
+            [
+                "bce21507.9fd7d8"
+            ]
+        ]
+    },
+    {
+        "id": "bce21507.9fd7d8",
+        "type": "ui_gauge",
+        "z": "bf3b3f87.f9aa",
+        "name": "Pressure",
+        "group": "48023693.416478",
+        "order": 3,
+        "width": "3",
+        "height": "3",
+        "gtype": "gage",
+        "title": "Atm. Pressure",
+        "label": "hPa",
+        "format": "{{value|number:1}}",
+        "min": "971",
+        "max": "1007",
+        "colors": [
+            "#2b2b2b",
+            "#d4d49b",
+            "#008eff"
+        ],
+        "seg1": "986",
+        "seg2": "992",
+        "x": 860,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "b19b797f.2d4dc8",
+        "type": "ui_chart",
+        "z": "bf3b3f87.f9aa",
+        "name": "Time series",
+        "group": "48023693.416478",
+        "order": 5,
+        "width": "12",
+        "height": "6",
+        "label": "Series",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "auto",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "8",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "useOldStyle": false,
+        "x": 864.9488639831543,
+        "y": 365.62783908843994,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "3060dc06.4e1754",
+        "type": "mqtt out",
+        "z": "bf3b3f87.f9aa",
+        "name": "Send",
+        "topic": "",
+        "qos": "1",
+        "retain": "false",
+        "broker": "d0cd0cad.79ccf",
+        "x": 1060,
+        "y": 81,
+        "wires": []
+    },
+    {
+        "id": "ee29a58b.0375f8",
+        "type": "ui_text",
+        "z": "bf3b3f87.f9aa",
+        "group": "b0ef6c7e.2f501",
+        "order": 4,
+        "width": "2",
+        "height": "2",
+        "name": "LED status",
+        "label": "LED status",
+        "format": "{{payload}}",
+        "layout": "row-left",
+        "x": 650,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "5b22fcd2.a89544",
+        "type": "function",
+        "z": "bf3b3f87.f9aa",
+        "name": "Device LED filter",
+        "func": "var topicfilter = \"/devices/\" + flow.get('DeviceID') + \"/status\"\nif (msg.topic == topicfilter)\n{\n    var device_data = JSON.parse(msg.payload).state.reported;\n    msg.payload = device_data.LedOn;\n}\nelse\n{\n    msg = null;\n}\n\nreturn msg;",
+        "outputs": "1",
+        "noerr": 0,
+        "x": 371,
+        "y": 200,
+        "wires": [
+            [
+                "ee29a58b.0375f8",
+                "56123e71.ed557"
+            ]
+        ]
+    },
+    {
+        "id": "60135071.b9f9a8",
+        "type": "mqtt in",
+        "z": "bf3b3f87.f9aa",
+        "name": "monitor status",
+        "topic": "/devices/+/status",
+        "qos": "1",
+        "broker": "d0cd0cad.79ccf",
+        "x": 171,
+        "y": 198,
+        "wires": [
+            [
+                "5b22fcd2.a89544"
+            ]
+        ]
+    },
+    {
+        "id": "fc76c8a7.d2eaa8",
+        "type": "function",
+        "z": "bf3b3f87.f9aa",
+        "name": "Spherical Acc",
+        "func": "var device_data = msg.payload.state.reported;\nvar x = device_data.acc_x;\nvar y = device_data.acc_y;\nvar z = device_data.acc_z;\nvar pi = Math.acos(-1);\nvar sph = {};\nsph.r = Math.sqrt(x*x + y*y + z*z);\nsph.theta = Math.acos(z/sph.r)/pi*180;\nsph.phi = Math.atan(y/x)/pi*180;\n\nvar msg1 = { topic: \"r\", payload: sph.r/1000 };\nvar msg2 = { topic: \"theta\", payload: sph.theta };\nvar msg3 = { topic: \"phi\", payload: sph.phi };\n\nreturn [msg1, msg2, msg3];",
+        "outputs": "3",
+        "noerr": 0,
+        "x": 600,
+        "y": 580,
+        "wires": [
+            [
+                "4b933fff.a1c4f"
+            ],
+            [
+                "b654d612.98f578"
+            ],
+            [
+                "f32a7414.39e458"
+            ]
+        ],
+        "outputLabels": [
+            "r",
+            "theta",
+            "phi"
+        ]
+    },
+    {
+        "id": "4b933fff.a1c4f",
+        "type": "ui_gauge",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "group": "8cfbc2.2d0a544",
+        "order": 1,
+        "width": "3",
+        "height": "3",
+        "gtype": "gage",
+        "title": "Acc",
+        "label": "g",
+        "format": "{{value|number:3}}",
+        "min": "0.8",
+        "max": "1.2",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 810,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "b654d612.98f578",
+        "type": "ui_gauge",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "group": "8cfbc2.2d0a544",
+        "order": 2,
+        "width": "3",
+        "height": "3",
+        "gtype": "gage",
+        "title": "Acc Theta",
+        "label": "",
+        "format": "{{value|number:0}}°",
+        "min": "0",
+        "max": "180",
+        "colors": [
+            "#666666",
+            "#666666",
+            "#666666"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 830,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "f32a7414.39e458",
+        "type": "ui_gauge",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "group": "8cfbc2.2d0a544",
+        "order": 3,
+        "width": "3",
+        "height": "3",
+        "gtype": "gage",
+        "title": "Acc Phi",
+        "label": "",
+        "format": "{{value|number:0}}°",
+        "min": "-90",
+        "max": "90",
+        "colors": [
+            "#666666",
+            "#666666",
+            "#666666"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 820,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "167a0121.d6a0cf",
+        "type": "function",
+        "z": "bf3b3f87.f9aa",
+        "name": "Spherical Gyr",
+        "func": "var device_data = msg.payload.state.reported;\nvar x = device_data.gyr_x;\nvar y = device_data.gyr_y;\nvar z = device_data.gyr_z;\nvar pi = Math.acos(-1);\nvar sph = {};\nsph.r = Math.sqrt(x*x + y*y + z*z);\nsph.theta = Math.acos(z/sph.r)/pi*180;\nsph.phi = Math.atan(y/x)/pi*180;\n\nvar msg1 = { topic: \"r\", payload: sph.r/1000 };\nvar msg2 = { topic: \"theta\", payload: sph.theta };\nvar msg3 = { topic: \"phi\", payload: sph.phi };\n\nreturn [msg1, msg2, msg3];",
+        "outputs": "3",
+        "noerr": 0,
+        "x": 600,
+        "y": 700,
+        "wires": [
+            [
+                "d932c32d.fd0af8"
+            ],
+            [
+                "af82dc77.4b7df"
+            ],
+            [
+                "3c602dd6.d231ca"
+            ]
+        ],
+        "outputLabels": [
+            "r",
+            "theta",
+            "phi"
+        ]
+    },
+    {
+        "id": "d932c32d.fd0af8",
+        "type": "ui_gauge",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "group": "8cfbc2.2d0a544",
+        "order": 4,
+        "width": "3",
+        "height": "3",
+        "gtype": "gage",
+        "title": "Gyr",
+        "label": "deg/s",
+        "format": "{{value|number:1}}",
+        "min": "0",
+        "max": "200",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 810,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "af82dc77.4b7df",
+        "type": "ui_gauge",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "group": "8cfbc2.2d0a544",
+        "order": 5,
+        "width": "3",
+        "height": "3",
+        "gtype": "gage",
+        "title": "Gyr Theta",
+        "label": "",
+        "format": "{{value|number:0}}°",
+        "min": "0",
+        "max": "180",
+        "colors": [
+            "#666666",
+            "#666666",
+            "#666666"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 830,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "3c602dd6.d231ca",
+        "type": "ui_gauge",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "group": "8cfbc2.2d0a544",
+        "order": 6,
+        "width": "3",
+        "height": "3",
+        "gtype": "gage",
+        "title": "Gyr Phi",
+        "label": "",
+        "format": "{{value|number:0}}°",
+        "min": "-90",
+        "max": "90",
+        "colors": [
+            "#666666",
+            "#666666",
+            "#666666"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 820,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "5857a4a7.9e0eec",
+        "type": "function",
+        "z": "bf3b3f87.f9aa",
+        "name": "Spherical Mag",
+        "func": "var device_data = msg.payload.state.reported;\nvar x = device_data.mag_x;\nvar y = device_data.mag_y;\nvar z = device_data.mag_z;\nvar pi = Math.acos(-1);\nvar sph = {};\nsph.r = Math.sqrt(x*x + y*y + z*z);\nsph.theta = Math.acos(z/sph.r)/pi*180;\nsph.phi = Math.atan(y/x)/pi*180;\n\nvar msg1 = { topic: \"r\", payload: sph.r/1000 };\nvar msg2 = { topic: \"theta\", payload: sph.theta };\nvar msg3 = { topic: \"phi\", payload: sph.phi };\n\nreturn [msg1, msg2, msg3];",
+        "outputs": "3",
+        "noerr": 0,
+        "x": 600,
+        "y": 800,
+        "wires": [
+            [
+                "770ea953.9708d"
+            ],
+            [
+                "3a3e1d83.f52402"
+            ],
+            [
+                "6c4c027a.12c1f4"
+            ]
+        ],
+        "outputLabels": [
+            "r",
+            "theta",
+            "phi"
+        ]
+    },
+    {
+        "id": "770ea953.9708d",
+        "type": "ui_gauge",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "group": "8cfbc2.2d0a544",
+        "order": 7,
+        "width": "3",
+        "height": "3",
+        "gtype": "gage",
+        "title": "Mag",
+        "label": "",
+        "format": "{{value|number:2}}G",
+        "min": "0",
+        "max": "2",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 810,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "3a3e1d83.f52402",
+        "type": "ui_gauge",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "group": "8cfbc2.2d0a544",
+        "order": 8,
+        "width": "3",
+        "height": "3",
+        "gtype": "gage",
+        "title": "Mag Theta",
+        "label": "",
+        "format": "{{value|number:0}}°",
+        "min": "0",
+        "max": "180",
+        "colors": [
+            "#666666",
+            "#666666",
+            "#666666"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 830,
+        "y": 820,
+        "wires": []
+    },
+    {
+        "id": "6c4c027a.12c1f4",
+        "type": "ui_gauge",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "group": "8cfbc2.2d0a544",
+        "order": 9,
+        "width": "3",
+        "height": "3",
+        "gtype": "gage",
+        "title": "Mag Phi",
+        "label": "",
+        "format": "{{value|number:0}}°",
+        "min": "-90",
+        "max": "90",
+        "colors": [
+            "#666666",
+            "#666666",
+            "#666666"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 820,
+        "y": 860,
+        "wires": []
+    },
+    {
+        "id": "96d9a7a9.dc00c8",
+        "type": "ui_switch",
+        "z": "bf3b3f87.f9aa",
+        "name": "LED switch",
+        "label": "LED switch",
+        "group": "b0ef6c7e.2f501",
+        "order": 3,
+        "width": "2",
+        "height": "2",
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "style": "",
+        "onvalue": "{\"LedOn\": true}",
+        "onvalueType": "json",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "{\"LedOn\": false}",
+        "offvalueType": "json",
+        "officon": "",
+        "offcolor": "",
+        "x": 730,
+        "y": 80,
+        "wires": [
+            [
+                "cdae126d.fb8af8"
+            ]
+        ]
+    },
+    {
+        "id": "8a62ef0d.da785",
+        "type": "ui_numeric",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "label": "Telemetry interval (s)",
+        "group": "b0ef6c7e.2f501",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "topic": "",
+        "format": "{{value}}",
+        "min": "1",
+        "max": "60",
+        "step": 1,
+        "x": 480,
+        "y": 120,
+        "wires": [
+            [
+                "ec032e77.6138a"
+            ]
+        ]
+    },
+    {
+        "id": "ec032e77.6138a",
+        "type": "change",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "rules": [
+            {
+                "t": "move",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.TelemetryInterval",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 710,
+        "y": 120,
+        "wires": [
+            [
+                "cdae126d.fb8af8"
+            ]
+        ]
+    },
+    {
+        "id": "214dfde6.ba4d52",
+        "type": "ui_button",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "group": "b0ef6c7e.2f501",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Reboot",
+        "color": "",
+        "bgcolor": "0xFF0000",
+        "icon": "",
+        "payload": "{\"Reboot\":true}",
+        "payloadType": "json",
+        "topic": "",
+        "x": 740,
+        "y": 40,
+        "wires": [
+            [
+                "cdae126d.fb8af8"
+            ]
+        ]
+    },
+    {
+        "id": "db435a8.2c8d2a8",
+        "type": "ui_text_input",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "label": "DeviceID",
+        "group": "b0ef6c7e.2f501",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "mode": "text",
+        "delay": 300,
+        "topic": "",
+        "x": 309,
+        "y": 60,
+        "wires": [
+            [
+                "dd358724.777aa8"
+            ]
+        ]
+    },
+    {
+        "id": "cdae126d.fb8af8",
+        "type": "function",
+        "z": "bf3b3f87.f9aa",
+        "name": "topicize",
+        "func": "msg.topic = \"/devices/\" + flow.get('DeviceID') + \"/control\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 930,
+        "y": 81,
+        "wires": [
+            [
+                "3060dc06.4e1754"
+            ]
+        ]
+    },
+    {
+        "id": "dd358724.777aa8",
+        "type": "function",
+        "z": "bf3b3f87.f9aa",
+        "name": "save",
+        "func": "flow.set('DeviceID', msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 439,
+        "y": 60,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4b42a32e.588a64",
+        "type": "function",
+        "z": "bf3b3f87.f9aa",
+        "name": "Sensor filter",
+        "func": "var topicfilter = \"/sensors/\" + flow.get('DeviceID');\nif (msg.topic != topicfilter)\n{\n    msg = null;\n}\n\nreturn msg;",
+        "outputs": "1",
+        "noerr": 0,
+        "x": 350,
+        "y": 340,
+        "wires": [
+            [
+                "6edee329.dde17c",
+                "d9c3ab80.7d8148",
+                "e2e012b5.85701",
+                "fc76c8a7.d2eaa8",
+                "167a0121.d6a0cf",
+                "5857a4a7.9e0eec",
+                "8d0de8b1.ae3f9",
+                "56123e71.ed557"
+            ]
+        ]
+    },
+    {
+        "id": "6c7f0eb4.990078",
+        "type": "inject",
+        "z": "bf3b3f87.f9aa",
+        "name": "default",
+        "topic": "",
+        "payload": "mySTM32_1",
+        "payloadType": "str",
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "x": 169,
+        "y": 60,
+        "wires": [
+            [
+                "db435a8.2c8d2a8"
+            ]
+        ]
+    },
+    {
+        "id": "8d0de8b1.ae3f9",
+        "type": "function",
+        "z": "bf3b3f87.f9aa",
+        "name": "Proximity filter",
+        "func": "msg.payload = msg.payload.state.reported.proximity;\nmsg.topic = \"proximity\";\n\nreturn msg;",
+        "outputs": "1",
+        "noerr": 0,
+        "x": 600,
+        "y": 500,
+        "wires": [
+            [
+                "585e536f.be9edc"
+            ]
+        ]
+    },
+    {
+        "id": "585e536f.be9edc",
+        "type": "ui_gauge",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "group": "48023693.416478",
+        "order": 4,
+        "width": "2",
+        "height": "3",
+        "gtype": "wave",
+        "title": "",
+        "label": "mm",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "2000",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "x": 850,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "56123e71.ed557",
+        "type": "ui_text",
+        "z": "bf3b3f87.f9aa",
+        "group": "b0ef6c7e.2f501",
+        "order": 2,
+        "width": "0",
+        "height": "0",
+        "name": "",
+        "label": "Last seen",
+        "format": "{{msg.payload.state.reported.ts * 1000 |date : 'mediumTime'}}",
+        "layout": "row-spread",
+        "x": 640,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "993b8507.c476a",
+        "type": "json",
+        "z": "bf3b3f87.f9aa",
+        "name": "",
+        "pretty": false,
+        "x": 190,
+        "y": 360,
+        "wires": [
+            [
+                "4b42a32e.588a64"
+            ]
+        ]
+    },
+    {
+        "id": "d0cd0cad.79ccf",
+        "type": "mqtt-broker",
+        "z": "",
+        "broker": "localhost",
+        "port": "8883",
+        "tls": "5c1f15d3.96ceac",
+        "clientid": "",
+        "usetls": true,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": ""
+    },
+    {
+        "id": "48023693.416478",
+        "type": "ui_group",
+        "z": "",
+        "name": "col2",
+        "tab": "5c574e72.b45ba",
+        "order": 4,
+        "disp": false,
+        "width": "12"
+    },
+    {
+        "id": "b0ef6c7e.2f501",
+        "type": "ui_group",
+        "z": "",
+        "name": "col0",
+        "tab": "5c574e72.b45ba",
+        "order": 1,
+        "disp": false,
+        "width": "4"
+    },
+    {
+        "id": "8cfbc2.2d0a544",
+        "type": "ui_group",
+        "z": "",
+        "name": "col1",
+        "tab": "5c574e72.b45ba",
+        "order": 2,
+        "disp": false,
+        "width": "9"
+    },
+    {
+        "id": "5c1f15d3.96ceac",
+        "type": "tls-config",
+        "z": "",
+        "name": "plume",
+        "cert": "",
+        "key": "",
+        "ca": "",
+        "certname": "client.crt",
+        "keyname": "client.key",
+        "caname": "ca.crt",
+        "verifyservercert": false
+    },
+    {
+        "id": "5c574e72.b45ba",
+        "type": "ui_tab",
+        "z": "",
+        "name": "Home",
+        "icon": "dashboard"
+    }
+]
