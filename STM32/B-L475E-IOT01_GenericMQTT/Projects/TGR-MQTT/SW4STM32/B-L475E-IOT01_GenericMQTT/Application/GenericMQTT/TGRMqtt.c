@@ -1,5 +1,5 @@
 /*****************************************************************************************************
- * File Name:	TGRMqtt.h
+ * File Name:	TGRMqtt.c
  *
  * Description: Provides functions for performing with MQTT client
  *
