@@ -100,7 +100,6 @@ extern void mcu_initialized(void *params);
 int main(void) {
 
 	BOARD_Init();
-	mcu_initialized(NULL);
 
 #ifdef SIMPLE_IO_TESTING
 	IO_Tester();
