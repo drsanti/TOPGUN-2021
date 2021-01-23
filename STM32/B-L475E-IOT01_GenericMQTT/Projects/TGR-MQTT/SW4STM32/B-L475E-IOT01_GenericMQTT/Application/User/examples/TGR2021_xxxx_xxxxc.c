@@ -1,5 +1,465 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+	{
+		//...CODE...
+	}
+
+	void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+	{
+		if(GPIO_Pin == GPIO_PIN_13) {
+			//...CODE...
+		}
+	}
+
+
+	void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+	{
+		//...CODE...
+	}
+
+
+	void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+	{
+		if(htim->Instance == TIM2) {
+			//...CODE...
+		}
+	}
+
+
+
+	void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+	{
+		//...CODE...
+	}
+
+
+	void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+	{
+		if(huart->Instance == USART1) {
+			//....CODE...
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	uint8_t rxBuffer[4];
+	uint8_t rxData [8];
+	uint8_t rxCounter = 0;
+
+	void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+	{
+		HAL_UART_Receive_IT(&huart1, rxBuffer, 1);
+
+		if(rxBuffer[0] == '\n') {
+
+			if(rxCounter == 2 && rxData[0] == 'O' && rxData[1] == 'N') {
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET); 	// ON
+			}
+			else if(rxCounter == 3 && rxData[0] == 'O' && rxData[1] == 'F' && rxData[2] == 'F') {
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET); 	// OFF
+			}
+			else {}
+
+			rxCounter = 0;
+		}
+		else {
+			rxData[rxCounter] = rxBuffer[0];
+			rxCounter++;
+			if(rxCounter > 3) {
+				rxCounter = 0;
+			}
+		}
+	}
+
+	int main(void) {
+		//...
+
+		HAL_UART_Receive_IT(&huart1, rxBuffer, 1);
+
+		while (1) {
+			//...
+		}
+	}
+
+
+
+
+
+
+
+
+	uint8_t  led_status = 0; // OFF
+	uint16_t t_on   = 0;
+	uint16_t t_off  = 0;
+
+
+	uint16_t timCounter = 0;
+
+	void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+	{	// 0.01 == 10 mS
+		timCounter++;
+	}
+
+	int main(void) {
+		//...
+		HAL_TIM_Base_Start_IT(&htim2);
+		while (1) {
+			if(timCounter >= 1) {
+				timCounter = 0;
+				if(led_status == GPIO_PIN_RESET) {
+					if(++t_off == 90) {
+						t_off = 0;
+						led_status = GPIO_PIN_SET;		// ON
+						HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, led_status);
+					}
+				}
+				else if(led_status == GPIO_PIN_SET) {
+					if(++t_on == 10) {
+						t_on = 0;
+						led_status = GPIO_PIN_RESET;	// OFF
+						HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, led_status);
+					}
+				}
+			}
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	uint16_t counter = 0;
+
+	void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+	{
+		counter++;
+	}
+
+	int main(void)
+	{
+		//...
+		while (1)
+		{
+			if(counter >= 5) {
+				counter = 0;
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+				HAL_Delay(500);
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+			}
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	char rxBuffer[32];
+	while (1)
+	{
+		HAL_StatusTypeDef status = HAL_UART_Receive(&huart1, (uint8_t *)rxBuffer, 1, 10);
+
+		if(status == HAL_OK) {
+			if( rxBuffer[0] == '0' ) {
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET); 	// LED1 OFF
+			}
+			else if( rxBuffer[0] == '1' ) {
+				HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);		// LED1 ON
+			}
+			else {
+				// Error
+			}
+		}
+	}
+
+
+	uint16_t counter = 0;
+	while (1)
+	{
+		char buffer[32];
+		sprintf(buffer, "Counter: %d\n", ++counter);
+		HAL_UART_Transmit(&huart1, (uint8_t *)buffer, strlen(buffer), 20);
+		HAL_Delay(500);
+	}
+
+
+
+
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+	GPIO_InitStruct.Pin  = GPIO_PIN_9;
+	while (1)
+	{
+
+		// Output Mode (Yellow or Blue LEDs)
+		GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+		HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+		// Yellow LED ON, Blue LED OFF
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET);
+		HAL_Delay(900);
+
+		// Blue LED ON, Yellow LED OFF
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+		HAL_Delay(100);
+
+
+		// Input Mode (Yellow & Blue LEDs OFF)
+		GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+		HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+		HAL_Delay(1000);
+	}
+
+
+	while (1)
+	{
+		// LED1 ON
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+		HAL_Delay(100);
+
+		// LED1 OFF
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+		HAL_Delay(900);
+
+		// Get switch status
+		GPIO_PinState blueSW = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
+
+		// Write switch status to LED2
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, blueSW);
+	}
+
+
+
+
+
+
+
+
+
+
+
+if(rxCounter >= 3) {
+		if(rxData[0] == 'O' && rxData[1] == 'N') {
+			rxCounter = 0;
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET); // ON
+		}
+		else if(rxData[0] == 'O' && rxData[1] == 'F' && rxData[2] == 'F' ) {
+			rxCounter = 0;
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET); // OFF
+		}
+	}
+}
+if(rxCounter >= 4) {
+	rxCounter = 0;
+	// Error
+}
+
+
+	/*** Interrupt Function ***/
+
+	void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+	{
+		counter++;
+	}
+
+
+
+	/*** Main Function ***/
+
+	int main(void)
+	{
+		while(1)
+		{
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+			HAL_Delay(500);
+
+			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+			HAL_Delay(500);
+		}
+	}
+
+
+
+
+/*** TGR2021 SECTION1 START ******************************************************************/
+
+/*** YOUR CODE HERE
+int x = 0;
+
+/*** TGR2021 SECTION1 END ********************************************************************/
+
+
+/*** TGR2021 SECTION2 START ******************************************************************/
+/*** YOUR CODE HERE
+ *
+int y = 1;
+
+/*** TGR2021 SECTION2 END ********************************************************************/
+
+
+/*** TGR2021 SECTION1 START ******************************************************************/
+
+
+/*** TGR2021 SECTION1 END ********************************************************************/
+
+
+
+//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+//HAL_Delay(200);
+
+//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+//HAL_Delay(200);
+
+HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+HAL_Delay(100);
+
+
+//*** TGR2021 SECTION1 END ********************************************************************
+
+
+if(state == 0) {
+
+	if(blueSW == GPIO_PIN_SET) {
+		state = 1;
+	}
+}
+else if(state == 1) {
+
+	if(blueSW == GPIO_PIN_RESET) {
+		state = 0;
+		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+	}
+}
+
+//HAL_Delay(10);
+
+
+
+
+
+
+
+blueSW = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
+
+
 /*********************************************************************************************
- * File Name:	ex01_getting_started.c
+ * File Name:	TGR2021_xxxx_xxxxc.c
  *
  * Description: Provides API functions for accessing IOs, timing, and MQTT client
  *
@@ -153,8 +613,6 @@ void ticked_callback(uint32_t ticks) {
 }
 
 
-
-
 /*** TGR2021 SECTION1 START ******************************************************************/
 /*** YOUR CODE HERE
 
@@ -171,71 +629,16 @@ void ticked_callback(uint32_t ticks) {
 void TGR_Main(void) {
 
 
-	/*** TGR2021 SECTION1 START **************************************************************/
+	/*** TGR2021 SECTION2 START **************************************************************/
 	/*** YOUR CODE HERE
 
-	/*** TGR2021 SECTION1 END ****************************************************************/
+	/*** TGR2021 SECTION2 END ****************************************************************/
 
-
-	/******************************************************************************************
-	 ****
-	 **** BASIC EXAMPLE START
-	 ****
-	 ******************************************************************************************/
 
 	Psw_SetPushedCallback(psw_pushed);
 	Psw_SetHoldingCallback(psw_holding);
 	Mqtt_SetConnectedCallback(mqtt_connected);
 	Clk_SetTickCallback(ticked_callback);
-
-
-	/* Example 1.
-	uint32_t t0, t1;
-	t0 = HAL_GetTick();
-	t1 = t0;
-
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);	// LED1
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);	// LED2
-
-	bool bit = true;
-	while(1) {
-		t1 = HAL_GetTick();
-		if( (t1 - t0) > 200) {
-			t0 = t1;
-			HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);			// LED1
-			HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);			// LED2
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, bit);		// LED3
-			bit = !bit;
-		}
-	}
-	*/
-
-	/* Example 2
-	uint32_t counter = 0;
-	while(1) {
-		HAL_Delay(1);
-		if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == GPIO_PIN_RESET) {
-			if(++counter > 100) {
-				counter = 0;
-				HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_9);
-			}
-		}
-	}
-	*/
-
-	/*******************************************************************************************************
-	 ****
-	 **** BASIC EXAMPLE END
-	 ****
-	 *******************************************************************************************************/
-
-
-
-	/*******************************************************************************************************
-	 ****
-	 **** MQTT CLIENT START
-	 ****
-	 *******************************************************************************************************/
 	GenericMQTT_Client_Run(0);
 	while(1);
 }
@@ -256,3 +659,21 @@ void TGR_Main(void) {
 	   #    #     # #       #     # #     # #    ##    #    #  #     # #       #          #
 	   #    ####### #        #####   #####  #     #    #     # #     # ####### #######    #
 */
+
+
+
+
+/*** TGR2021 SECTION1 START ******************************************************************/
+
+/*** YOUR CODE HERE
+int x = 0;
+
+/*** TGR2021 SECTION1 END ********************************************************************/
+
+
+/*** TGR2021 SECTION2 START ******************************************************************/
+/*** YOUR CODE HERE
+ *
+int y = 1;
+
+/*** TGR2021 SECTION2 END ********************************************************************/
