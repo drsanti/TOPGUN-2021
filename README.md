@@ -2,6 +2,14 @@
 
 Documents, Codes, Tools, Examples and other resources for TESA TOPGUN-2021 will be shared here.
 
+
+---
+## :floppy_disk: TGR2021 Project Templates
+
+### :books: [EP09_DigitalInput](https://drive.google.com/file/d/1ZAJ4NzvDXBW9oZik7L-3nyhn7kKmHmzG/view?usp=sharing)
+### :books: [EP13_UartInterrupt](https://drive.google.com/file/d/1DvXCA7XfzyiJkGYLvNJdgYZXE-LNHbd3/view?usp=sharing)
+### :books: [B-L475E-IOT01_GenericMQTT](https://drive.google.com/file/d/10jBdOsoc3o3Z6AITqzKFoNZL2wlcodpa/view?usp=sharing)
+
 ---
 
 ## :floppy_disk: Project Template

@@ -29,7 +29,7 @@
  *********************************************************************************************/
 #include <main.h>
 
-
+/** Warning: Avoid using printf in callback function! **/
 
 
 /*********************************************************************************************
@@ -104,7 +104,9 @@ static MQTTClient *ptr_Client;
  * Callback Functions                                                                        *
  *********************************************************************************************/
 void mqtt_message_received(MessageData* data) {
+
 	printf("\n\n**mqtt_message_received()\n\n");
+
 	char topicBuffer[64]={0};
 	int len = data->topicName->lenstring.len;
 	memcpy(topicBuffer, data->topicName->lenstring.data,  len);
@@ -117,14 +119,18 @@ void mqtt_message_received(MessageData* data) {
 
 
 void mqtt_connected(MQTTClient *client, const char *deviceId) {
+
 	printf("\n\n**mqtt_connected() %s\n\n", deviceId);
+
 	ptr_Client = client;
 	Mqtt_Subscribe(client, "/hello/world", mqtt_message_received);
 }
 
 
 void psw_pushed(uint32_t count) {
+
 	printf("\nbtn_pushed_callback()\n");
+
 	if(Mqtt_CanPublish()){
 		Mqtt_SensorsPublish();
 	}
@@ -135,7 +141,9 @@ void psw_pushed(uint32_t count) {
 
 
 void psw_holding(uint32_t count) {
+
 	printf("\nbtn_holding_callback()\n");
+
 	if(Mqtt_CanPublish()){
 		Mqtt_SensorsPublishContinuous(2);
 	}
@@ -156,7 +164,7 @@ void ticked_callback(uint32_t ticks) {
 
 
 /*** TGR2021 SECTION1 START ******************************************************************/
-/*** YOUR CODE HERE
+/*** YOUR CODE HERE */
 
 /*** TGR2021 SECTION1 END ********************************************************************/
 
@@ -172,7 +180,7 @@ void TGR_Main(void) {
 
 
 	/*** TGR2021 SECTION1 START **************************************************************/
-	/*** YOUR CODE HERE
+	/*** YOUR CODE HERE */
 
 	/*** TGR2021 SECTION1 END ****************************************************************/
 

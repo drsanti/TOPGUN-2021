@@ -163,11 +163,11 @@
 							<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec.1498393092" name="MCU Output Converter Motorola S-rec with symbols" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.objcopy.symbolsrec"/>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.916810241.1229506123" name="TGR2021_xxxx_xxxx.c" rcbsApplicability="disable" resourcePath="Application/User/examples/TGR2021_xxxx_xxxx.c" toolsToInvoke="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.875642862.2046708529">
-						<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.875642862.2046708529" name="MCU GCC Compiler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.875642862"/>
+					<fileInfo id="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.916810241.1018374598" name="ex01_getting_started.c" rcbsApplicability="disable" resourcePath="Application/User/examples/ex01_getting_started.c" toolsToInvoke="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.875642862.533439212">
+						<tool id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.875642862.533439212" name="MCU GCC Compiler" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.875642862"/>
 					</fileInfo>
 					<sourceEntries>
-						<entry excluding="Application/User/examples/TGR2021_xxxx_xxxx.c|Middlewares/Third_Party/FreeRTOS|ECCLabLibs|Application/GenericMQTT/GenericMQTTExample_2.c|Application/GenericMQTT/GenericMQTTXcubeSample.c|Debug|Application/User/main.c|BtnSrc|Release|Application/GenericMQTT/GenericMQTTExample_v1.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Application/User/examples/ex05_sub_pub.c|Application/User/examples/ex04_mqtt_configuration.c|Application/User/examples/ex03_wireless_connect.c|Application/User/examples/ex02_event_driven.c|Application/User/examples/TGR2021_xxxx_xxxx.c|Middlewares/Third_Party/FreeRTOS|ECCLabLibs|Application/GenericMQTT/GenericMQTTExample_2.c|Application/GenericMQTT/GenericMQTTXcubeSample.c|Debug|Application/User/main.c|BtnSrc|Release|Application/GenericMQTT/GenericMQTTExample_v1.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
